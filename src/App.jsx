@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Copy,
@@ -33,6 +33,22 @@ const App = () => {
       "",
   );
   const [showSettings, setShowSettings] = useState(false);
+  const textareaRef = useRef(null);
+  const editRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [newPrompt]);
+
+  useEffect(() => {
+    if (editRef.current) {
+      editRef.current.style.height = "auto";
+      editRef.current.style.height = `${editRef.current.scrollHeight}px`;
+    }
+  }, [editContent]);
 
   useEffect(() => {
     const saved = localStorage.getItem("prompt_archive_data");
@@ -302,7 +318,8 @@ const App = () => {
         <div className="mb-10 group">
           <div className="relative bg-[#161616] border border-[#262626] rounded-xl transition-all duration-300 focus-within:border-[#444]">
             <textarea
-              className="w-full bg-transparent border-none focus:ring-0 p-4 min-h-[100px] text-[15px] leading-relaxed placeholder-[#444] resize-none focus:outline-none"
+              ref={textareaRef}
+              className="w-full bg-transparent border-none focus:ring-0 p-4 min-h-[100px] max-h-[70vh] text-[15px] leading-relaxed placeholder-[#444] resize-none focus:outline-none overflow-y-auto"
               placeholder="Paste or type a prompt here..."
               value={newPrompt}
               onChange={(e) => setNewPrompt(e.target.value)}
@@ -388,7 +405,8 @@ const App = () => {
                   {editingId === prompt.id ? (
                     <div className="space-y-3">
                       <textarea
-                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-[14.5px] text-[#ddd] focus:border-[#555] focus:ring-0 resize-none min-h-[120px] focus:outline-none"
+                        ref={editRef}
+                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-[14.5px] text-[#ddd] focus:border-[#555] focus:ring-0 resize-none min-h-[120px] max-h-[60vh] focus:outline-none overflow-y-auto"
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
                         autoFocus

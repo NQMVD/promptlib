@@ -50,13 +50,26 @@ const App = () => {
   const [showSettings, setShowSettings] = useState(false);
   const textareaRef = useRef(null);
   const editRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const addBenchmarkBtnRef = useRef(null);
+  const addThoughtBtnRef = useRef(null);
 
-  // Escape key handling
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = String(d.getFullYear()).slice(-2);
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
+  // Keyboard shortcuts and Escape handling
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Escape handling
       if (e.key === "Escape") {
         if (selectedPromptId) {
-          // Check if any input/textarea is focused
           if (
             document.activeElement &&
             (document.activeElement.tagName === "INPUT" ||
@@ -66,12 +79,43 @@ const App = () => {
           } else {
             setSelectedPromptId(null);
           }
+          return;
+        }
+      }
+
+      // Global shortcuts (when not typing in an input)
+      const isTyping =
+        document.activeElement &&
+        (document.activeElement.tagName === "INPUT" ||
+          document.activeElement.tagName === "TEXTAREA");
+
+      if (!isTyping) {
+        if (e.key === "n") {
+          e.preventDefault();
+          if (selectedPromptId) {
+            // New entry in modal
+            const prompt = prompts.find((p) => p.id === selectedPromptId);
+            if (prompt?.mode === "compare") addBenchmarkBtnRef.current?.click();
+            if (prompt?.mode === "iterate") addThoughtBtnRef.current?.click();
+          } else {
+            // New prompt in main view
+            textareaRef.current?.focus();
+          }
+        }
+        if (e.key === "s" && !selectedPromptId) {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        }
+        if (e.key === "c" && selectedPromptId) {
+          e.preventDefault();
+          const prompt = prompts.find((p) => p.id === selectedPromptId);
+          if (prompt) copyToClipboard(prompt.content, prompt.id);
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPromptId]);
+  }, [selectedPromptId, prompts]);
 
   // Auto-resize textareas
   useEffect(() => {
@@ -156,7 +200,7 @@ const App = () => {
     const promptObj = {
       id: Date.now() + Math.random(),
       content: content.trim(),
-      timestamp: new Date().toLocaleString(),
+      timestamp: formatDate(new Date()),
       mode: "none", // none, compare, iterate
       models: [], // [{ id, name, rating, note, timestamp }]
       thoughts: [], // [{ id, text, timestamp }]
@@ -175,7 +219,7 @@ const App = () => {
     const duplicated = {
       ...prompt,
       id: Date.now() + Math.random(),
-      timestamp: new Date().toLocaleString() + " (Copy)",
+      timestamp: formatDate(new Date()) + " (Copy)",
     };
     setPrompts([duplicated, ...prompts]);
   };
@@ -207,7 +251,7 @@ const App = () => {
                 {
                   ...modelData,
                   id: Date.now() + Math.random(),
-                  timestamp: new Date().toLocaleString(),
+                  timestamp: formatDate(new Date()),
                 },
               ],
             }
@@ -241,7 +285,7 @@ const App = () => {
                 {
                   id: Date.now(),
                   text,
-                  timestamp: new Date().toLocaleString(),
+                  timestamp: formatDate(new Date()),
                 },
               ],
             }
@@ -481,6 +525,7 @@ const App = () => {
               size={16}
             />
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search library..."
               className="w-full bg-[#111] border border-[#222] rounded-xl pl-12 pr-4 py-3 text-sm focus:border-[#444] focus:ring-0 transition-all focus:outline-none shadow-sm"
@@ -605,20 +650,20 @@ const App = () => {
                     <div className="flex items-center gap-4">
                       {prompt.mode === "compare" &&
                         prompt.models.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#888]">
                             <Zap size={12} className="text-[#EEB180]" />
                             {prompt.models.length} Models
                           </div>
                         )}
                       {prompt.mode === "iterate" &&
                         prompt.thoughts.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#888]">
                             <Brain size={12} className="text-[#AAA0FA]" />
                             {prompt.thoughts.length} Thoughts
                           </div>
                         )}
                     </div>
-                    <div className="text-[10px] font-mono text-[#444] uppercase tracking-tighter">
+                    <div className="text-[10px] font-mono text-[#888] uppercase tracking-tighter">
                       {prompt.timestamp}
                     </div>
                   </div>
@@ -718,7 +763,7 @@ const App = () => {
                     <h3 className="text-sm font-bold text-[#f0f0f0]">
                       Prompt Detail
                     </h3>
-                    <p className="text-[10px] text-[#555] font-mono">
+                    <p className="text-[10px] text-[#888] font-mono">
                       {selectedPrompt.timestamp}
                     </p>
                   </div>
@@ -831,17 +876,17 @@ const App = () => {
                                 onClick={() =>
                                   removeModelResult(selectedPrompt.id, m.id)
                                 }
-                                className="opacity-0 group-hover/item:opacity-100 p-1 text-[#444] hover:text-red-500 transition-all"
+                                className="opacity-0 group-hover/item:opacity-100 p-1 text-[#666] hover:text-red-500 transition-all"
                                 title="Remove benchmark"
                               >
                                 <Trash2 size={12} />
                               </button>
                             </div>
                           </div>
-                          <p className="text-xs text-[#888] leading-relaxed italic">
+                          <p className="text-xs text-[#ddd] leading-relaxed italic">
                             "{m.note}"
                           </p>
-                          <div className="mt-4 text-[9px] font-mono text-[#333] uppercase">
+                          <div className="mt-4 text-[9px] font-mono text-[#666] uppercase">
                             {m.timestamp}
                           </div>
                         </div>
@@ -849,6 +894,7 @@ const App = () => {
 
                       {/* Add Model Form */}
                       <AddModelForm
+                        ref={addBenchmarkBtnRef}
                         onAdd={(data) =>
                           addModelResult(selectedPrompt.id, data)
                         }
@@ -891,7 +937,7 @@ const App = () => {
                               {idx + 1}
                             </div>
                             {idx !== selectedPrompt.thoughts.length - 1 && (
-                              <div className="w-px h-full bg-[#222] my-2" />
+                              <div className="w-px flex-1 bg-[#222] my-2" />
                             )}
                           </div>
                           <div className="flex-1">
@@ -899,7 +945,7 @@ const App = () => {
                               <p className="text-sm text-[#ddd] leading-relaxed">
                                 {t.text}
                               </p>
-                              <div className="mt-2 text-[9px] font-mono text-[#333] uppercase">
+                              <div className="mt-2 text-[9px] font-mono text-[#666] uppercase">
                                 {t.timestamp}
                               </div>
                             </div>
@@ -908,6 +954,7 @@ const App = () => {
                       ))}
 
                       <AddThoughtForm
+                        ref={addThoughtBtnRef}
                         onAdd={(text) =>
                           addIterationThought(selectedPrompt.id, text)
                         }
@@ -946,11 +993,23 @@ const App = () => {
 };
 
 // Sub-components for better organization
-const AddModelForm = ({ onAdd }) => {
+const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(0);
   const [note, setNote] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    if (isAdding) {
+      const handleNumKey = (e) => {
+        if (["1", "2", "3", "4", "5"].includes(e.key)) {
+          setRating(parseInt(e.key));
+        }
+      };
+      window.addEventListener("keydown", handleNumKey);
+      return () => window.removeEventListener("keydown", handleNumKey);
+    }
+  }, [isAdding]);
 
   const handleSubmit = () => {
     if (!name || !rating) return;
@@ -964,6 +1023,7 @@ const AddModelForm = ({ onAdd }) => {
   if (!isAdding) {
     return (
       <button
+        ref={ref}
         onClick={() => setIsAdding(true)}
         className="h-full min-h-[140px] flex flex-col items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-[#EEB180]/50 hover:bg-[#EEB180]/5 transition-all text-[#444] hover:text-[#EEB180]"
       >
@@ -988,8 +1048,8 @@ const AddModelForm = ({ onAdd }) => {
         }}
       />
       <div className="flex items-center gap-3 px-1">
-        <span className="text-[10px] text-[#555] uppercase font-bold">
-          Rating
+        <span className="text-[10px] text-[#888] uppercase font-bold">
+          Rating (1-5)
         </span>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((s) => (
@@ -1009,12 +1069,13 @@ const AddModelForm = ({ onAdd }) => {
         onChange={(e) => setNote(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && e.metaKey) handleSubmit();
+          if (e.key === "Enter" && !e.metaKey && rating > 0 && name) handleSubmit();
         }}
       />
       <div className="flex gap-2">
         <button
           onClick={() => setIsAdding(false)}
-          className="flex-1 py-2 text-[10px] font-bold text-[#555] hover:text-[#888] uppercase"
+          className="flex-1 py-2 text-[10px] font-bold text-[#666] hover:text-[#888] uppercase"
         >
           Cancel
         </button>
@@ -1027,9 +1088,9 @@ const AddModelForm = ({ onAdd }) => {
       </div>
     </div>
   );
-};
+});
 
-const AddThoughtForm = ({ onAdd }) => {
+const AddThoughtForm = React.forwardRef(({ onAdd }, ref) => {
   const [text, setText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
@@ -1043,6 +1104,7 @@ const AddThoughtForm = ({ onAdd }) => {
   if (!isAdding) {
     return (
       <button
+        ref={ref}
         onClick={() => setIsAdding(true)}
         className="w-full py-4 flex items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-[#AAA0FA]/50 hover:bg-[#AAA0FA]/5 transition-all text-[#444] hover:text-[#AAA0FA]"
       >
@@ -1064,12 +1126,13 @@ const AddThoughtForm = ({ onAdd }) => {
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && e.metaKey) handleSubmit();
+          if (e.key === "Enter" && !e.metaKey && text.trim()) handleSubmit();
         }}
       />
       <div className="flex gap-2 justify-end">
         <button
           onClick={() => setIsAdding(false)}
-          className="px-6 py-2 text-[10px] font-bold text-[#555] hover:text-[#888] uppercase"
+          className="px-6 py-2 text-[10px] font-bold text-[#666] hover:text-[#888] uppercase"
         >
           Cancel
         </button>
@@ -1082,6 +1145,6 @@ const AddThoughtForm = ({ onAdd }) => {
       </div>
     </div>
   );
-};
+});
 
 export default App;

@@ -861,23 +861,13 @@ const App = () => {
                             <div className="flex flex-col md:flex-row">
                               {/* Left: Stats & Name */}
                               <div className="p-4 md:w-1/3 border-b md:border-b-0 md:border-r border-[#222] bg-[#111]/50">
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-[#444] font-mono">
-                                      #{idx + 1}
-                                    </span>
-                                    <h4 className="font-bold text-[#f0f0f0] truncate">
-                                      {m.name}
-                                    </h4>
-                                  </div>
-                                  <button
-                                    onClick={() =>
-                                      removeModelResult(selectedPrompt.id, m.id)
-                                    }
-                                    className="opacity-0 group-hover/item:opacity-100 p-1 text-[#666] hover:text-red-500 transition-all"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="text-[14.5px] font-bold text-[#444] font-mono shrink-0">
+                                    #{idx + 1}
+                                  </span>
+                                  <h4 className="font-bold text-[#f0f0f0] truncate text-[14.5px]">
+                                    {m.name}
+                                  </h4>
                                 </div>
                                 
                                 <div className="space-y-1">
@@ -898,12 +888,23 @@ const App = () => {
                               {/* Right: Observations */}
                               <div className="p-4 flex-1 flex flex-col justify-between">
                                 <div className="mb-4">
-                                  <span className="text-[9px] uppercase font-bold text-[#666] block mb-1">Observations</span>
-                                  <p className="text-sm text-[#ddd] leading-relaxed italic">
-                                    "{m.note || "No specific observations recorded."}"
+                                  <div className="flex justify-between items-start mb-1">
+                                    <span className="text-[9px] uppercase font-bold text-[#666]">Observations</span>
+                                    <button
+                                      onClick={() =>
+                                        removeModelResult(selectedPrompt.id, m.id)
+                                      }
+                                      className="opacity-0 group-hover/item:opacity-100 p-1 text-[#444] hover:text-red-500 transition-all"
+                                      title="Remove entry"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                  <p className="text-sm text-[#888] leading-relaxed">
+                                    {m.note || "—"}
                                   </p>
                                 </div>
-                                <div className="text-[9px] font-mono text-[#888] uppercase flex items-center gap-2">
+                                <div className="text-[9px] font-mono text-[#444] uppercase flex items-center gap-2">
                                   <span>LOGGED</span>
                                   <span>{m.timestamp}</span>
                                 </div>
@@ -1020,17 +1021,20 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
   const [rating, setRating] = useState(0);
   const [note, setNote] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const ratingContainerRef = useRef(null);
+  const noteRef = useRef(null);
 
   useEffect(() => {
-    if (isAdding) {
-      const handleNumKey = (e) => {
+    const handleNumKey = (e) => {
+      // Only handle if this specific form is focused/active
+      if (isAdding && (document.activeElement?.closest(".add-benchmark-form") || document.activeElement === ratingContainerRef.current)) {
         if (["1", "2", "3", "4", "5"].includes(e.key)) {
           setRating(parseInt(e.key));
         }
-      };
-      window.addEventListener("keydown", handleNumKey);
-      return () => window.removeEventListener("keydown", handleNumKey);
-    }
+      }
+    };
+    window.addEventListener("keydown", handleNumKey);
+    return () => window.removeEventListener("keydown", handleNumKey);
   }, [isAdding]);
 
   const handleSubmit = () => {
@@ -1047,66 +1051,102 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
       <button
         ref={ref}
         onClick={() => setIsAdding(true)}
-        className="h-full min-h-[140px] flex flex-col items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-[#EEB180]/50 hover:bg-[#EEB180]/5 transition-all text-[#444] hover:text-[#EEB180]"
+        className="w-full py-4 flex items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-[#EEB180]/50 hover:bg-[#EEB180]/5 transition-all text-[#444] hover:text-[#EEB180]"
       >
-        <Plus size={24} />
+        <Plus size={18} />
         <span className="text-xs font-bold uppercase tracking-widest">
-          Add Benchmark
+          Add New
         </span>
       </button>
     );
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#EEB180]/30 rounded-2xl p-5 space-y-4 animate-in zoom-in-95 duration-200">
-      <input
-        autoFocus
-        placeholder="Model Name (e.g. Claude 3.5)"
-        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-3 py-2 text-xs focus:border-[#EEB180] outline-none transition-all"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && e.metaKey) handleSubmit();
-        }}
-      />
-      <div className="flex items-center gap-3 px-1">
-        <span className="text-[10px] text-[#888] uppercase font-bold">
-          Rating (1-5)
-        </span>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((s) => (
-            <Star
-              key={s}
-              size={16}
-              className={`cursor-pointer transition-all hover:scale-125 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-[#333]"}`}
-              onClick={() => setRating(s)}
+    <div className="add-benchmark-form bg-[#0d0d0d] border border-[#EEB180]/30 rounded-xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="flex flex-col md:flex-row">
+        {/* Left Input: Stats Area */}
+        <div className="p-4 md:w-1/3 border-b md:border-b-0 md:border-r border-[#222] bg-[#111]/50 space-y-4">
+          <div className="space-y-1">
+            <span className="text-[9px] uppercase font-bold text-[#666] block">Model Name</span>
+            <input
+              autoFocus
+              placeholder="e.g. GPT-4o"
+              className="w-full bg-transparent border-none p-0 text-[14.5px] font-bold text-[#f0f0f0] outline-none focus:ring-0 placeholder-[#333]"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Tab") {
+                  e.preventDefault();
+                  ratingContainerRef.current?.focus();
+                }
+              }}
             />
-          ))}
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex justify-between text-[9px] uppercase font-bold text-[#666]">
+              <span>Rating</span>
+              <span className="text-[#EEB180] font-mono">{rating > 0 ? rating * 20 : 0}%</span>
+            </div>
+            <div 
+              ref={ratingContainerRef}
+              tabIndex={0}
+              className="flex items-center gap-1.5 focus:outline-none focus:ring-1 focus:ring-[#EEB180]/30 rounded p-1 -ml-1 transition-all"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && name && rating > 0) {
+                  handleSubmit();
+                } else if (e.key === "Tab") {
+                  e.preventDefault();
+                  noteRef.current?.focus();
+                }
+              }}
+            >
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star
+                  key={s}
+                  size={16}
+                  className={`cursor-pointer transition-all hover:scale-125 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-[#222]"}`}
+                  onClick={() => setRating(s)}
+                />
+              ))}
+            </div>
+            <p className="text-[8px] text-[#444] font-mono uppercase">Use keys 1-5 to rate</p>
+          </div>
         </div>
-      </div>
-      <textarea
-        placeholder="Short experience note..."
-        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-3 py-2 text-xs h-20 resize-none focus:border-[#EEB180] outline-none transition-all"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && e.metaKey) handleSubmit();
-          if (e.key === "Enter" && !e.metaKey && rating > 0 && name) handleSubmit();
-        }}
-      />
-      <div className="flex gap-2">
-        <button
-          onClick={() => setIsAdding(false)}
-          className="flex-1 py-2 text-[10px] font-bold text-[#666] hover:text-[#888] uppercase"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="flex-1 py-2 bg-[#EEB180] text-black rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-[#EEB180]/20"
-        >
-          Save
-        </button>
+
+        {/* Right Input: Observations Area */}
+        <div className="p-4 flex-1 flex flex-col justify-between">
+          <div className="space-y-1 h-full flex flex-col">
+            <span className="text-[9px] uppercase font-bold text-[#666] block">Observations</span>
+            <textarea
+              ref={noteRef}
+              placeholder="Record your findings..."
+              className="w-full flex-1 bg-transparent border-none p-0 text-sm text-[#ddd] outline-none focus:ring-0 resize-none placeholder-[#333] min-h-[60px]"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.metaKey) handleSubmit();
+                if (e.key === "Enter" && !e.metaKey && name && rating > 0) handleSubmit();
+              }}
+            />
+          </div>
+          
+          <div className="mt-4 flex gap-3 justify-end items-center">
+            <button
+              onClick={() => setIsAdding(false)}
+              className="text-[10px] font-bold text-[#444] hover:text-[#666] uppercase transition-colors"
+            >
+              Discard
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!name || !rating}
+              className="bg-[#EEB180] text-black px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-[#EEB180]/10 disabled:opacity-30 active:scale-95 transition-all"
+            >
+              Log Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

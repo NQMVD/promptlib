@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import VariantsGallery from "./VariantsGallery";
 import {
   Plus,
   Copy,
@@ -61,6 +62,7 @@ const App = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [selectedPromptId, setSelectedPromptId] = useState(null);
   const [isAddingModel, setIsAddingModel] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
 
   useEffect(() => {
     if (!selectedPromptId) {
@@ -263,7 +265,7 @@ const App = () => {
     event.target.value = "";
   };
 
-  const addPrompt = (content = newPrompt) => {
+  const addPrompt = (content = newPrompt, parentId = null, relationType = null) => {
     if (!content.trim()) return;
     const promptObj = {
       id: Date.now() + Math.random(),
@@ -272,6 +274,8 @@ const App = () => {
       mode: "none", // none, compare, evolve
       models: [], // [{ id, name, rating, note, timestamp }]
       thoughts: [], // [{ id, text, timestamp }]
+      parentId,
+      relationType,
     };
     setPrompts([promptObj, ...prompts]);
     setNewPrompt("");
@@ -405,7 +409,7 @@ const App = () => {
       }
       const data = await response.json();
       const enhancedText = data.choices?.[0]?.message?.content;
-      if (enhancedText) addPrompt(enhancedText);
+      if (enhancedText) addPrompt(enhancedText, prompt.id, "enhanced");
     } catch (err) {
       console.error("Enhance failed:", err);
       alert("Failed to enhance prompt. Error: " + err.message);
@@ -458,7 +462,7 @@ const App = () => {
       const data = await response.json();
       const evolvedText = data.choices?.[0]?.message?.content;
       if (evolvedText) {
-        addPrompt(evolvedText);
+        addPrompt(evolvedText, prompt.id, "evolved");
         alert("New evolved prompt created!");
       }
     } catch (err) {
@@ -480,6 +484,10 @@ const App = () => {
   const filteredPrompts = prompts.filter((p) =>
     p.content.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  if (showGallery) {
+    return <VariantsGallery onBack={() => setShowGallery(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#d1d1d1] font-sans selection:bg-[#3d3d3d]">
@@ -519,6 +527,13 @@ const App = () => {
               title="Settings"
             >
               <Settings size={18} />
+            </button>
+            <button
+              onClick={() => setShowGallery(true)}
+              className="p-2 rounded-lg text-[#666] hover:text-[#f0f0f0] hover:bg-[#161616] transition-all"
+              title="View UI Variants"
+            >
+              <Layout size={18} />
             </button>
             <div className="hidden sm:block text-xs text-[#666] font-mono uppercase tracking-widest bg-[#161616] px-3 py-1.5 rounded-full border border-[#222]">
               {prompts.length} Items

@@ -60,6 +60,13 @@ const App = () => {
   const [isEvolvingId, setIsEvolvingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [selectedPromptId, setSelectedPromptId] = useState(null);
+  const [isAddingModel, setIsAddingModel] = useState(false);
+
+  useEffect(() => {
+    if (!selectedPromptId) {
+      setIsAddingModel(false);
+    }
+  }, [selectedPromptId]);
 
   const [provider, setProvider] = useState(
     localStorage.getItem("provider") || "openrouter",
@@ -124,7 +131,12 @@ const App = () => {
           document.activeElement.tagName === "TEXTAREA");
 
       if (!isTyping) {
-        if (e.key === "Tab" && selectedPromptId) {
+        if (
+          e.key === "Tab" &&
+          selectedPromptId &&
+          !isAddingModel &&
+          !isAddingThought
+        ) {
           e.preventDefault();
           const prompt = prompts.find((p) => p.id === selectedPromptId);
           if (prompt) {
@@ -274,7 +286,11 @@ const App = () => {
   const deletePrompt = (id) => {
     setPrompts(prompts.filter((p) => p.id !== id));
     setConfirmDeleteId(null);
-    if (selectedPromptId === id) setSelectedPromptId(null);
+    if (selectedPromptId === id) {
+      setSelectedPromptId(null);
+      setIsAddingModel(false);
+      setIsAddingThought(false);
+    }
   };
 
   const duplicatePrompt = (prompt) => {
@@ -701,20 +717,22 @@ const App = () => {
                 </AnimatePresence>
 
                 <div className="p-4">
-                  <div className="flex justify-between items-start mb-2 empty:hidden">
-                    <div className="flex gap-2">
-                      {prompt.mode === "compare" && (
-                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EEB180]/10 text-[#EEB180] text-[10px] font-bold uppercase tracking-wider border border-[#EEB180]/20">
-                          <BarChart2 size={10} /> Compare
-                        </span>
-                      )}
-                      {prompt.mode === "iterate" && (
-                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#AAA0FA]/10 text-[#AAA0FA] text-[10px] font-bold uppercase tracking-wider border border-[#AAA0FA]/20">
-                          <History size={10} /> Iterate
-                        </span>
-                      )}
+                  {prompt.mode !== "none" && (
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex gap-2">
+                        {prompt.mode === "compare" && (
+                          <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EEB180]/10 text-[#EEB180] text-[10px] font-bold uppercase tracking-wider border border-[#EEB180]/20">
+                            <BarChart2 size={10} /> Compare
+                          </span>
+                        )}
+                        {prompt.mode === "iterate" && (
+                          <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#AAA0FA]/10 text-[#AAA0FA] text-[10px] font-bold uppercase tracking-wider border border-[#AAA0FA]/20">
+                            <History size={10} /> Iterate
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {editingId === prompt.id ? (
                     <div
@@ -776,12 +794,12 @@ const App = () => {
                 {/* Horizontal Action Bar */}
                 {editingId !== prompt.id && !confirmDeleteId && (
                   <div
-                    className="absolute bottom-4 right-4 flex flex-row items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-1 rounded-xl shadow-2xl"
+                    className="absolute bottom-2 right-2 flex flex-row items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-0.5 rounded-xl shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       onClick={() => copyToClipboard(prompt.content, prompt.id)}
-                      className={`p-2.5 rounded-lg transition-all ${
+                      className={`p-2 rounded-lg transition-all ${
                         copiedId === prompt.id
                           ? "text-green-400 bg-green-400/10"
                           : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
@@ -789,43 +807,43 @@ const App = () => {
                       title="Copy"
                     >
                       {copiedId === prompt.id ? (
-                        <Check size={18} />
+                        <Check size={16} />
                       ) : (
-                        <Copy size={18} />
+                        <Copy size={16} />
                       )}
                     </button>
                     <button
                       onClick={() => startEditing(prompt)}
-                      className="p-2.5 text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626] rounded-lg transition-all"
+                      className="p-2 text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626] rounded-lg transition-all"
                       title="Edit"
                     >
-                      <Edit3 size={18} />
+                      <Edit3 size={16} />
                     </button>
                     <button
                       onClick={() => enhancePrompt(prompt)}
                       disabled={isEnhancingId === prompt.id}
-                      className="p-2.5 text-[#888] hover:text-[#AAA0FA] hover:bg-[#AAA0FA]/10 rounded-lg transition-all disabled:opacity-50"
+                      className="p-2 text-[#888] hover:text-[#AAA0FA] hover:bg-[#AAA0FA]/10 rounded-lg transition-all disabled:opacity-50"
                       title="AI Enhance"
                     >
                       {isEnhancingId === prompt.id ? (
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <Sparkles size={18} />
+                        <Sparkles size={16} />
                       )}
                     </button>
                     <button
                       onClick={() => duplicatePrompt(prompt)}
-                      className="p-2.5 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
+                      className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
                       title="Duplicate"
                     >
-                      <CopyPlus size={18} />
+                      <CopyPlus size={16} />
                     </button>
                     <button
                       onClick={() => setConfirmDeleteId(prompt.id)}
-                      className="p-2.5 text-[#888] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                      className="p-2 text-[#888] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
                       title="Delete"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 )}
@@ -917,25 +935,128 @@ const App = () => {
                       Base Prompt
                     </span>
                   </div>
-                  <div className="bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 relative group">
-                    <p className="text-[16px] leading-relaxed text-[#ddd] whitespace-pre-wrap">
-                      {selectedPrompt.content}
-                    </p>
-                    <button
-                      onClick={() =>
-                        copyToClipboard(
-                          selectedPrompt.content,
-                          selectedPrompt.id,
-                        )
-                      }
-                      className="absolute top-4 right-4 p-2 rounded-lg bg-[#161616] border border-[#222] text-[#555] hover:text-[#f0f0f0] opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      {copiedId === selectedPrompt.id ? (
-                        <Check size={16} />
-                      ) : (
-                        <Copy size={16} />
+                  <div className="bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 relative group overflow-hidden">
+                    {/* Delete Confirmation Overlay for Modal */}
+                    <AnimatePresence>
+                      {confirmDeleteId === selectedPrompt.id && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <AlertCircle
+                            className="text-red-500 mb-3"
+                            size={28}
+                          />
+                          <p className="text-sm font-medium text-[#f0f0f0] mb-5">
+                            Delete this prompt forever?
+                          </p>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-6 py-2 rounded-xl text-xs font-medium border border-[#333] hover:bg-[#222] transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => deletePrompt(selectedPrompt.id)}
+                              className="px-6 py-2 rounded-xl text-xs font-medium bg-red-600 text-white hover:bg-red-500 transition-colors shadow-lg shadow-red-500/20"
+                            >
+                              Confirm Delete
+                            </button>
+                          </div>
+                        </motion.div>
                       )}
-                    </button>
+                    </AnimatePresence>
+
+                    {editingId === selectedPrompt.id ? (
+                      <div className="space-y-4">
+                        <textarea
+                          ref={editRef}
+                          className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4 text-[15px] text-[#ddd] focus:border-[#555] focus:ring-0 resize-none min-h-[140px] max-h-[60vh] focus:outline-none overflow-y-auto"
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          autoFocus
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="p-2 text-[#888] hover:text-[#f0f0f0] transition-colors"
+                          >
+                            <X size={20} />
+                          </button>
+                          <button
+                            onClick={() => saveEdit(selectedPrompt.id)}
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[#f0f0f0] text-[#0a0a0a] rounded-lg text-xs font-bold shadow-md"
+                          >
+                            <Save size={14} /> Save Changes
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[16px] leading-relaxed text-[#ddd] whitespace-pre-wrap">
+                          {selectedPrompt.content}
+                        </p>
+                        <div className="absolute bottom-2 right-2 flex flex-row items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-0.5 rounded-xl shadow-2xl">
+                          <button
+                            onClick={() =>
+                              copyToClipboard(
+                                selectedPrompt.content,
+                                selectedPrompt.id,
+                              )
+                            }
+                            className={`p-2 rounded-lg transition-all ${
+                              copiedId === selectedPrompt.id
+                                ? "text-green-400 bg-green-400/10"
+                                : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
+                            }`}
+                            title="Copy"
+                          >
+                            {copiedId === selectedPrompt.id ? (
+                              <Check size={16} />
+                            ) : (
+                              <Copy size={16} />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => startEditing(selectedPrompt)}
+                            className="p-2 text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626] rounded-lg transition-all"
+                            title="Edit"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button
+                            onClick={() => enhancePrompt(selectedPrompt)}
+                            disabled={isEnhancingId === selectedPrompt.id}
+                            className="p-2 text-[#888] hover:text-[#AAA0FA] hover:bg-[#AAA0FA]/10 rounded-lg transition-all disabled:opacity-50"
+                            title="AI Enhance"
+                          >
+                            {isEnhancingId === selectedPrompt.id ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={16} />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => duplicatePrompt(selectedPrompt)}
+                            className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
+                            title="Duplicate"
+                          >
+                            <CopyPlus size={16} />
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(selectedPrompt.id)}
+                            className="p-2 text-[#888] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -1030,8 +1151,9 @@ const App = () => {
                       <div className="pt-4">
                         <AddModelForm
                           ref={addBenchmarkBtnRef}
+                          onAddingChange={setIsAddingModel}
                           onAdd={(data) =>
-                            addModelResult(selectedPrompt.id, data)
+                            addModelResult(selectedPromptId, data)
                           }
                         />
                       </div>
@@ -1091,6 +1213,7 @@ const App = () => {
 
                       <AddThoughtForm
                         ref={addThoughtBtnRef}
+                        onAddingChange={setIsAddingThought}
                         onAdd={(text) =>
                           addIterationThought(selectedPrompt.id, text)
                         }
@@ -1129,11 +1252,16 @@ const App = () => {
 };
 
 // Sub-components for better organization
-const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
+const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(0);
   const [note, setNote] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    onAddingChange?.(isAdding);
+  }, [isAdding, onAddingChange]);
+
   const ratingContainerRef = useRef(null);
   const noteRef = useRef(null);
 
@@ -1278,9 +1406,13 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
   );
 });
 
-const AddThoughtForm = React.forwardRef(({ onAdd }, ref) => {
+const AddThoughtForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
   const [text, setText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    onAddingChange?.(isAdding);
+  }, [isAdding, onAddingChange]);
 
   const handleSubmit = () => {
     if (!text) return;

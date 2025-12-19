@@ -57,7 +57,11 @@ const App = () => {
       if (e.key === "Escape") {
         if (selectedPromptId) {
           // Check if any input/textarea is focused
-          if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+          if (
+            document.activeElement &&
+            (document.activeElement.tagName === "INPUT" ||
+              document.activeElement.tagName === "TEXTAREA")
+          ) {
             document.activeElement.blur();
           } else {
             setSelectedPromptId(null);
@@ -356,7 +360,7 @@ const App = () => {
       <header className="border-b border-[#222] bg-[#0d0d0d]/80 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#d97757] to-[#b95737] flex items-center justify-center shadow-lg shadow-orange-500/10">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#EEB180] to-[#CE9160] flex items-center justify-center shadow-lg shadow-orange-500/10">
               <Archive size={18} className="text-white" />
             </div>
             <h1 className="text-lg font-medium tracking-tight text-[#f0f0f0]">
@@ -551,12 +555,12 @@ const App = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex gap-2">
                       {prompt.mode === "compare" && (
-                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-500/20">
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EEB180]/10 text-[#EEB180] text-[10px] font-bold uppercase tracking-wider border border-[#EEB180]/20">
                           <BarChart2 size={10} /> Compare
                         </span>
                       )}
                       {prompt.mode === "iterate" && (
-                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-500/10 text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-500/20">
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#AAA0FA]/10 text-[#AAA0FA] text-[10px] font-bold uppercase tracking-wider border border-[#AAA0FA]/20">
                           <History size={10} /> Iterate
                         </span>
                       )}
@@ -599,16 +603,17 @@ const App = () => {
                   {/* Indicators for stats */}
                   <div className="mt-6 flex items-center justify-between border-t border-[#222]/50 pt-4">
                     <div className="flex items-center gap-4">
-                      {prompt.mode === "compare" && prompt.models.length > 0 && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
-                          <Zap size={12} className="text-blue-500" />
-                          {prompt.models.length} Models
-                        </div>
-                      )}
+                      {prompt.mode === "compare" &&
+                        prompt.models.length > 0 && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
+                            <Zap size={12} className="text-[#EEB180]" />
+                            {prompt.models.length} Models
+                          </div>
+                        )}
                       {prompt.mode === "iterate" &&
                         prompt.thoughts.length > 0 && (
                           <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
-                            <Brain size={12} className="text-purple-500" />
+                            <Brain size={12} className="text-[#AAA0FA]" />
                             {prompt.thoughts.length} Thoughts
                           </div>
                         )}
@@ -650,7 +655,7 @@ const App = () => {
                     <button
                       onClick={() => enhancePrompt(prompt)}
                       disabled={isEnhancingId === prompt.id}
-                      className="p-2.5 text-[#888] hover:text-purple-400 hover:bg-purple-400/10 rounded-lg transition-all disabled:opacity-50"
+                      className="p-2.5 text-[#888] hover:text-[#AAA0FA] hover:bg-[#AAA0FA]/10 rounded-lg transition-all disabled:opacity-50"
                       title="AI Enhance"
                     >
                       {isEnhancingId === prompt.id ? (
@@ -661,7 +666,7 @@ const App = () => {
                     </button>
                     <button
                       onClick={() => duplicatePrompt(prompt)}
-                      className="p-2.5 text-[#888] hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all"
+                      className="p-2.5 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
                       title="Duplicate"
                     >
                       <CopyPlus size={18} />
@@ -694,7 +699,7 @@ const App = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+              className="absolute inset-0 bg-black/40 backdrop-blur-xl"
               onClick={() => setSelectedPromptId(null)}
             />
 
@@ -732,7 +737,7 @@ const App = () => {
                       onClick={() =>
                         updatePromptMode(selectedPrompt.id, "compare")
                       }
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "compare" ? "bg-blue-500/20 text-blue-400" : "text-[#555] hover:text-blue-400/50"}`}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "compare" ? "bg-[#EEB180]/20 text-[#EEB180]" : "text-[#555] hover:text-[#EEB180]/50"}`}
                     >
                       <BarChart2 size={12} /> Compare
                     </button>
@@ -740,7 +745,7 @@ const App = () => {
                       onClick={() =>
                         updatePromptMode(selectedPrompt.id, "iterate")
                       }
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "iterate" ? "bg-purple-500/20 text-purple-400" : "text-[#555] hover:text-purple-400/50"}`}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "iterate" ? "bg-[#AAA0FA]/20 text-[#AAA0FA]" : "text-[#555] hover:text-[#AAA0FA]/50"}`}
                     >
                       <History size={12} /> Iterate
                     </button>
@@ -790,8 +795,8 @@ const App = () => {
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <TrendingUp size={14} className="text-blue-500" />
-                        <span className="text-[11px] font-bold text-blue-400 uppercase tracking-widest">
+                        <TrendingUp size={14} className="text-[#EEB180]" />
+                        <span className="text-[11px] font-bold text-[#EEB180] uppercase tracking-widest">
                           Model Benchmarks
                         </span>
                       </div>
@@ -805,7 +810,7 @@ const App = () => {
                         >
                           <div className="flex justify-between items-start mb-3">
                             <h4 className="font-bold text-[#f0f0f0] flex items-center gap-2">
-                              <Zap size={14} className="text-blue-400" />{" "}
+                              <Zap size={14} className="text-[#EEB180]" />{" "}
                               {m.name}
                             </h4>
                             <div className="flex items-center gap-3">
@@ -823,7 +828,9 @@ const App = () => {
                                 ))}
                               </div>
                               <button
-                                onClick={() => removeModelResult(selectedPrompt.id, m.id)}
+                                onClick={() =>
+                                  removeModelResult(selectedPrompt.id, m.id)
+                                }
                                 className="opacity-0 group-hover/item:opacity-100 p-1 text-[#444] hover:text-red-500 transition-all"
                                 title="Remove benchmark"
                               >
@@ -840,7 +847,6 @@ const App = () => {
                         </div>
                       ))}
 
-
                       {/* Add Model Form */}
                       <AddModelForm
                         onAdd={(data) =>
@@ -855,8 +861,8 @@ const App = () => {
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Brain size={14} className="text-purple-500" />
-                        <span className="text-[11px] font-bold text-purple-400 uppercase tracking-widest">
+                        <Brain size={14} className="text-[#AAA0FA]" />
+                        <span className="text-[11px] font-bold text-[#AAA0FA] uppercase tracking-widest">
                           Evolution Log
                         </span>
                       </div>
@@ -866,7 +872,7 @@ const App = () => {
                           selectedPrompt.thoughts.length === 0 ||
                           isEvolvingId === selectedPrompt.id
                         }
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-500 transition-all disabled:opacity-30 shadow-lg shadow-purple-900/20"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#AAA0FA] text-black rounded-xl text-xs font-bold hover:bg-[#AAA0FA]/80 transition-all disabled:opacity-30 shadow-lg shadow-[#AAA0FA]/20"
                       >
                         {isEvolvingId === selectedPrompt.id ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -881,15 +887,15 @@ const App = () => {
                       {selectedPrompt.thoughts.map((t, idx) => (
                         <div key={t.id} className="flex gap-4">
                           <div className="flex flex-col items-center flex-shrink-0">
-                            <div className="w-6 h-6 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-[10px] font-bold text-purple-400 flex-shrink-0">
+                            <div className="w-6 h-6 rounded-full bg-[#AAA0FA]/20 border border-[#AAA0FA]/30 flex items-center justify-center text-[10px] font-bold text-[#AAA0FA] shrink-0">
                               {idx + 1}
                             </div>
                             {idx !== selectedPrompt.thoughts.length - 1 && (
                               <div className="w-px h-full bg-[#222] my-2" />
                             )}
                           </div>
-                          <div className="flex-1 pb-4">
-                            <div className="bg-[#161616] border border-[#222] rounded-2xl p-4">
+                          <div className="flex-1">
+                            <div className="bg-[#161616] border border-[#222] rounded-2xl p-4 w-fit max-w-full">
                               <p className="text-sm text-[#ddd] leading-relaxed">
                                 {t.text}
                               </p>
@@ -959,7 +965,7 @@ const AddModelForm = ({ onAdd }) => {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="h-full min-h-[140px] flex flex-col items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-[#444] hover:text-blue-400"
+        className="h-full min-h-[140px] flex flex-col items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-[#EEB180]/50 hover:bg-[#EEB180]/5 transition-all text-[#444] hover:text-[#EEB180]"
       >
         <Plus size={24} />
         <span className="text-xs font-bold uppercase tracking-widest">
@@ -970,11 +976,11 @@ const AddModelForm = ({ onAdd }) => {
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-blue-500/30 rounded-2xl p-5 space-y-4 animate-in zoom-in-95 duration-200">
+    <div className="bg-[#1a1a1a] border border-[#EEB180]/30 rounded-2xl p-5 space-y-4 animate-in zoom-in-95 duration-200">
       <input
         autoFocus
         placeholder="Model Name (e.g. Claude 3.5)"
-        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-3 py-2 text-xs focus:border-blue-500 outline-none transition-all"
+        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-3 py-2 text-xs focus:border-[#EEB180] outline-none transition-all"
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => {
@@ -998,7 +1004,7 @@ const AddModelForm = ({ onAdd }) => {
       </div>
       <textarea
         placeholder="Short experience note..."
-        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-3 py-2 text-xs h-20 resize-none focus:border-blue-500 outline-none transition-all"
+        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-3 py-2 text-xs h-20 resize-none focus:border-[#EEB180] outline-none transition-all"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         onKeyDown={(e) => {
@@ -1014,7 +1020,7 @@ const AddModelForm = ({ onAdd }) => {
         </button>
         <button
           onClick={handleSubmit}
-          className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-blue-900/20"
+          className="flex-1 py-2 bg-[#EEB180] text-black rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-[#EEB180]/20"
         >
           Save
         </button>
@@ -1038,7 +1044,7 @@ const AddThoughtForm = ({ onAdd }) => {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="w-full py-4 flex items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-[#444] hover:text-purple-400"
+        className="w-full py-4 flex items-center justify-center gap-2 border border-dashed border-[#222] rounded-2xl hover:border-[#AAA0FA]/50 hover:bg-[#AAA0FA]/5 transition-all text-[#444] hover:text-[#AAA0FA]"
       >
         <Plus size={18} />
         <span className="text-xs font-bold uppercase tracking-widest">
@@ -1049,11 +1055,11 @@ const AddThoughtForm = ({ onAdd }) => {
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-purple-500/30 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-4 duration-200">
+    <div className="bg-[#1a1a1a] border border-[#AAA0FA]/30 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-4 duration-200">
       <textarea
         autoFocus
         placeholder="What did the model miss? Any corrections or new ideas..."
-        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-4 py-3 text-sm h-32 resize-none focus:border-purple-500 outline-none transition-all"
+        className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-4 py-3 text-sm h-32 resize-none focus:border-[#AAA0FA] outline-none transition-all"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
@@ -1069,7 +1075,7 @@ const AddThoughtForm = ({ onAdd }) => {
         </button>
         <button
           onClick={handleSubmit}
-          className="px-6 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-purple-900/20"
+          className="px-6 py-2 bg-[#AAA0FA] text-black rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-[#AAA0FA]/20"
         >
           Log Thought
         </button>

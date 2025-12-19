@@ -90,6 +90,16 @@ const App = () => {
           document.activeElement.tagName === "TEXTAREA");
 
       if (!isTyping) {
+        if (e.key === "Tab" && selectedPromptId) {
+          e.preventDefault();
+          const prompt = prompts.find((p) => p.id === selectedPromptId);
+          if (prompt) {
+            const modes = ["none", "compare", "iterate"];
+            const currentIndex = modes.indexOf(prompt.mode);
+            const nextIndex = (currentIndex + 1) % modes.length;
+            updatePromptMode(selectedPromptId, modes[nextIndex]);
+          }
+        }
         if (e.key === "n") {
           e.preventDefault();
           if (selectedPromptId) {
@@ -207,6 +217,7 @@ const App = () => {
     };
     setPrompts([promptObj, ...prompts]);
     setNewPrompt("");
+    copyToClipboard(content.trim(), promptObj.id);
   };
 
   const deletePrompt = (id) => {
@@ -316,7 +327,7 @@ const App = () => {
             "X-Title": "Prompt Library",
           },
           body: JSON.stringify({
-            model: "mistralai/devstral-2512:free",
+            model: "openai/gpt-oss-120b:free",
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: `Original Prompt: ${prompt.content}` },
@@ -331,7 +342,7 @@ const App = () => {
       if (enhancedText) addPrompt(enhancedText);
     } catch (err) {
       console.error("Enhance failed:", err);
-      alert("Failed to enhance prompt.");
+      alert("Failed to enhance prompt. Error: " + err);
     } finally {
       setIsEnhancingId(null);
     }
@@ -360,7 +371,7 @@ const App = () => {
             "X-Title": "Prompt Library",
           },
           body: JSON.stringify({
-            model: "mistralai/devstral-2512:free",
+            model: "openai/gpt-oss-120b:free",
             messages: [
               { role: "system", content: systemPrompt },
               {
@@ -596,8 +607,8 @@ const App = () => {
                   )}
                 </AnimatePresence>
 
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-2 empty:hidden">
                     <div className="flex gap-2">
                       {prompt.mode === "compare" && (
                         <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EEB180]/10 text-[#EEB180] text-[10px] font-bold uppercase tracking-wider border border-[#EEB180]/20">
@@ -646,7 +657,7 @@ const App = () => {
                   )}
 
                   {/* Indicators for stats */}
-                  <div className="mt-6 flex items-center justify-between border-t border-[#222]/50 pt-4">
+                  <div className="mt-4 flex items-center justify-between border-t border-[#222]/50 pt-3">
                     <div className="flex items-center gap-4">
                       {prompt.mode === "compare" &&
                         prompt.models.length > 0 && (
@@ -869,17 +880,21 @@ const App = () => {
                                     {m.name}
                                   </h4>
                                 </div>
-                                
+
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-[9px] uppercase font-bold text-[#666] mb-1">
                                     <span>Score</span>
-                                    <span className="text-[#EEB180]">{(m.rating * 20)}%</span>
+                                    <span className="text-[#EEB180]">
+                                      {m.rating * 20}%
+                                    </span>
                                   </div>
                                   <div className="h-1.5 w-full bg-[#1a1a1a] rounded-full overflow-hidden">
-                                    <motion.div 
+                                    <motion.div
                                       initial={{ width: 0 }}
-                                      animate={{ width: `${(m.rating / 5) * 100}%` }}
-                                      className="h-full bg-linear-to-r from-[#EEB180]/50 to-[#EEB180]" 
+                                      animate={{
+                                        width: `${(m.rating / 5) * 100}%`,
+                                      }}
+                                      className="h-full bg-linear-to-r from-[#EEB180]/50 to-[#EEB180]"
                                     />
                                   </div>
                                 </div>
@@ -889,10 +904,15 @@ const App = () => {
                               <div className="p-4 flex-1 flex flex-col justify-between">
                                 <div className="mb-4">
                                   <div className="flex justify-between items-start mb-1">
-                                    <span className="text-[9px] uppercase font-bold text-[#666]">Observations</span>
+                                    <span className="text-[9px] uppercase font-bold text-[#666]">
+                                      Observations
+                                    </span>
                                     <button
                                       onClick={() =>
-                                        removeModelResult(selectedPrompt.id, m.id)
+                                        removeModelResult(
+                                          selectedPrompt.id,
+                                          m.id,
+                                        )
                                       }
                                       className="opacity-0 group-hover/item:opacity-100 p-1 text-[#444] hover:text-red-500 transition-all"
                                       title="Remove entry"
@@ -1027,7 +1047,11 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
   useEffect(() => {
     const handleNumKey = (e) => {
       // Only handle if this specific form is focused/active
-      if (isAdding && (document.activeElement?.closest(".add-benchmark-form") || document.activeElement === ratingContainerRef.current)) {
+      if (
+        isAdding &&
+        (document.activeElement?.closest(".add-benchmark-form") ||
+          document.activeElement === ratingContainerRef.current)
+      ) {
         if (["1", "2", "3", "4", "5"].includes(e.key)) {
           setRating(parseInt(e.key));
         }
@@ -1067,7 +1091,9 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
         {/* Left Input: Stats Area */}
         <div className="p-4 md:w-1/3 border-b md:border-b-0 md:border-r border-[#222] bg-[#111]/50 space-y-4">
           <div className="space-y-1">
-            <span className="text-[9px] uppercase font-bold text-[#666] block">Model Name</span>
+            <span className="text-[9px] uppercase font-bold text-[#666] block">
+              Model Name
+            </span>
             <input
               autoFocus
               placeholder="e.g. GPT-4o"
@@ -1082,13 +1108,15 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
               }}
             />
           </div>
-          
+
           <div className="space-y-1">
             <div className="flex justify-between text-[9px] uppercase font-bold text-[#666]">
               <span>Rating</span>
-              <span className="text-[#EEB180] font-mono">{rating > 0 ? rating * 20 : 0}%</span>
+              <span className="text-[#EEB180] font-mono">
+                {rating > 0 ? rating * 20 : 0}%
+              </span>
             </div>
-            <div 
+            <div
               ref={ratingContainerRef}
               tabIndex={0}
               className="flex items-center gap-1.5 focus:outline-none focus:ring-1 focus:ring-[#EEB180]/30 rounded p-1 -ml-1 transition-all"
@@ -1110,14 +1138,18 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
                 />
               ))}
             </div>
-            <p className="text-[8px] text-[#444] font-mono uppercase">Use keys 1-5 to rate</p>
+            <p className="text-[8px] text-[#444] font-mono uppercase">
+              Use keys 1-5 to rate
+            </p>
           </div>
         </div>
 
         {/* Right Input: Observations Area */}
         <div className="p-4 flex-1 flex flex-col justify-between">
           <div className="space-y-1 h-full flex flex-col">
-            <span className="text-[9px] uppercase font-bold text-[#666] block">Observations</span>
+            <span className="text-[9px] uppercase font-bold text-[#666] block">
+              Observations
+            </span>
             <textarea
               ref={noteRef}
               placeholder="Record your findings..."
@@ -1126,11 +1158,12 @@ const AddModelForm = React.forwardRef(({ onAdd }, ref) => {
               onChange={(e) => setNote(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.metaKey) handleSubmit();
-                if (e.key === "Enter" && !e.metaKey && name && rating > 0) handleSubmit();
+                if (e.key === "Enter" && !e.metaKey && name && rating > 0)
+                  handleSubmit();
               }}
             />
           </div>
-          
+
           <div className="mt-4 flex gap-3 justify-end items-center">
             <button
               onClick={() => setIsAdding(false)}

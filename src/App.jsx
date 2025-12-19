@@ -31,6 +31,24 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const PROVIDERS = {
+  openrouter: {
+    name: "OpenRouter",
+    endpoint: "https://openrouter.ai/api/v1/chat/completions",
+    defaultModel: "openai/gpt-oss-120b:free",
+  },
+  groq: {
+    name: "Groq",
+    endpoint: "https://api.groq.com/openai/v1/chat/completions",
+    defaultModel: "moonshotai/kimi-k2-instruct-0905",
+  },
+  cerebras: {
+    name: "Cerebras",
+    endpoint: "https://api.cerebras.ai/v1/chat/completions",
+    defaultModel: "zai-glm-4.6",
+  },
+};
+
 const App = () => {
   const [prompts, setPrompts] = useState([]);
   const [newPrompt, setNewPrompt] = useState("");
@@ -42,11 +60,27 @@ const App = () => {
   const [isEvolvingId, setIsEvolvingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [selectedPromptId, setSelectedPromptId] = useState(null);
-  const [apiKey, setApiKey] = useState(
-    localStorage.getItem("openrouter_api_key") ||
-      import.meta.env.VITE_OPENROUTER_API_KEY ||
-      "",
+
+  const [provider, setProvider] = useState(
+    localStorage.getItem("provider") || "openrouter",
   );
+  const [apiKeys, setApiKeys] = useState(() => {
+    const saved = localStorage.getItem("api_keys");
+    if (saved) return JSON.parse(saved);
+    // Legacy support
+    return {
+      openrouter:
+        localStorage.getItem("openrouter_api_key") ||
+        import.meta.env.VITE_OPENROUTER_API_KEY ||
+        "",
+      groq: "",
+      cerebras: "",
+    };
+  });
+  const [modelId, setModelId] = useState(
+    localStorage.getItem("modelId") || PROVIDERS[provider].defaultModel,
+  );
+
   const [showSettings, setShowSettings] = useState(false);
   const textareaRef = useRef(null);
   const editRef = useRef(null);
@@ -158,9 +192,26 @@ const App = () => {
     localStorage.setItem("prompt_archive_data", JSON.stringify(prompts));
   }, [prompts]);
 
-  const saveApiKey = (key) => {
-    setApiKey(key);
-    localStorage.setItem("openrouter_api_key", key);
+  useEffect(() => {
+    localStorage.setItem("provider", provider);
+  }, [provider]);
+
+  useEffect(() => {
+    localStorage.setItem("api_keys", JSON.stringify(apiKeys));
+  }, [apiKeys]);
+
+  useEffect(() => {
+    localStorage.setItem("modelId", modelId);
+  }, [modelId]);
+
+  const updateApiKey = (key) => {
+    setApiKeys((prev) => ({ ...prev, [provider]: key }));
+  };
+
+  const handleProviderChange = (newProvider) => {
+    setProvider(newProvider);
+    // Optionally reset modelId to default for that provider
+    setModelId(PROVIDERS[newProvider].defaultModel);
   };
 
   const exportLibrary = () => {
@@ -306,7 +357,8 @@ const App = () => {
   };
 
   const enhancePrompt = async (prompt) => {
-    if (!apiKey) {
+    const currentApiKey = apiKeys[provider];
+    if (!currentApiKey) {
       setShowSettings(true);
       return;
     }
@@ -316,40 +368,45 @@ const App = () => {
       "Role: Expert Prompt Architect. Objective: Refine raw user prompts into high-performance instruction sets. Output: Provide only the refined prompt. Do not provide a preamble or explanation.";
 
     try {
-      const response = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
+      const response = await fetch(PROVIDERS[provider].endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentApiKey}`,
+          ...(provider === "openrouter" && {
             "HTTP-Referer": "https://promptlib.local",
             "X-Title": "Prompt Library",
-          },
-          body: JSON.stringify({
-            model: "openai/gpt-oss-120b:free",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: `Original Prompt: ${prompt.content}` },
-            ],
           }),
         },
-      );
+        body: JSON.stringify({
+          model: modelId,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Original Prompt: ${prompt.content}` },
+          ],
+        }),
+      });
 
-      if (!response.ok) throw new Error("API Error");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message || `API Error: ${response.status}`,
+        );
+      }
       const data = await response.json();
       const enhancedText = data.choices?.[0]?.message?.content;
       if (enhancedText) addPrompt(enhancedText);
     } catch (err) {
       console.error("Enhance failed:", err);
-      alert("Failed to enhance prompt. Error: " + err);
+      alert("Failed to enhance prompt. Error: " + err.message);
     } finally {
       setIsEnhancingId(null);
     }
   };
 
   const evolvePrompt = async (prompt) => {
-    if (!apiKey) {
+    const currentApiKey = apiKeys[provider];
+    if (!currentApiKey) {
       setShowSettings(true);
       return;
     }
@@ -360,30 +417,34 @@ const App = () => {
       "You are an expert prompt engineer. Your task is to take a base prompt and evolve it based on the provided user thoughts, corrections, and feedback. Integrate all the feedback into a single, highly optimized new version of the prompt. Return ONLY the new prompt text.";
 
     try {
-      const response = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
+      const response = await fetch(PROVIDERS[provider].endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentApiKey}`,
+          ...(provider === "openrouter" && {
             "HTTP-Referer": "https://promptlib.local",
             "X-Title": "Prompt Library",
-          },
-          body: JSON.stringify({
-            model: "openai/gpt-oss-120b:free",
-            messages: [
-              { role: "system", content: systemPrompt },
-              {
-                role: "user",
-                content: `Base Prompt: ${prompt.content}\n\nUser Feedback/Thoughts:\n${thoughtsList}`,
-              },
-            ],
           }),
         },
-      );
+        body: JSON.stringify({
+          model: modelId,
+          messages: [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: `Base Prompt: ${prompt.content}\n\nUser Feedback/Thoughts:\n${thoughtsList}`,
+            },
+          ],
+        }),
+      });
 
-      if (!response.ok) throw new Error("API Error");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message || `API Error: ${response.status}`,
+        );
+      }
       const data = await response.json();
       const evolvedText = data.choices?.[0]?.message?.content;
       if (evolvedText) {
@@ -392,7 +453,7 @@ const App = () => {
       }
     } catch (err) {
       console.error("Evolve failed:", err);
-      alert("Failed to evolve prompt.");
+      alert("Failed to evolve prompt. Error: " + err.message);
     } finally {
       setIsEvolvingId(null);
     }
@@ -467,9 +528,9 @@ const App = () => {
               className="overflow-hidden mb-8"
             >
               <div className="p-6 bg-[#111] border border-[#222] rounded-xl">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <h2 className="text-sm font-medium text-[#f0f0f0]">
-                    OpenRouter Settings
+                    API Configuration
                   </h2>
                   <button
                     onClick={() => setShowSettings(false)}
@@ -478,21 +539,53 @@ const App = () => {
                     <X size={16} />
                   </button>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
-                      API Key
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="sk-or-..."
-                      className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
-                      value={apiKey}
-                      onChange={(e) => saveApiKey(e.target.value)}
-                    />
-                    <p className="mt-2 text-[10px] text-[#444]">
-                      Your key is stored locally in your browser.
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
+                        Provider
+                      </label>
+                      <select
+                        value={provider}
+                        onChange={(e) => handleProviderChange(e.target.value)}
+                        className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors appearance-none cursor-pointer"
+                      >
+                        {Object.entries(PROVIDERS).map(([id, p]) => (
+                          <option key={id} value={id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
+                        Model ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. gpt-4"
+                        className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
+                        value={modelId}
+                        onChange={(e) => setModelId(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
+                        {PROVIDERS[provider].name} API Key
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter API Key"
+                        className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
+                        value={apiKeys[provider] || ""}
+                        onChange={(e) => updateApiKey(e.target.value)}
+                      />
+                      <p className="mt-2 text-[10px] text-[#444]">
+                        Keys are stored locally in your browser per provider.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -131,12 +131,7 @@ const App = () => {
           document.activeElement.tagName === "TEXTAREA");
 
       if (!isTyping) {
-        if (
-          e.key === "Tab" &&
-          selectedPromptId &&
-          !isAddingModel &&
-          !isAddingThought
-        ) {
+        if (e.key === "Tab" && selectedPromptId && !isAddingModel) {
           e.preventDefault();
           const prompt = prompts.find((p) => p.id === selectedPromptId);
           if (prompt) {
@@ -171,7 +166,7 @@ const App = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPromptId, prompts]);
+  }, [selectedPromptId, prompts, isAddingModel]);
 
   // Auto-resize textareas
   useEffect(() => {
@@ -289,7 +284,6 @@ const App = () => {
     if (selectedPromptId === id) {
       setSelectedPromptId(null);
       setIsAddingModel(false);
-      setIsAddingThought(false);
     }
   };
 
@@ -1213,7 +1207,6 @@ const App = () => {
 
                       <AddThoughtForm
                         ref={addThoughtBtnRef}
-                        onAddingChange={setIsAddingThought}
                         onAdd={(text) =>
                           addIterationThought(selectedPrompt.id, text)
                         }
@@ -1406,13 +1399,9 @@ const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
   );
 });
 
-const AddThoughtForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
+const AddThoughtForm = React.forwardRef(({ onAdd }, ref) => {
   const [text, setText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    onAddingChange?.(isAdding);
-  }, [isAdding, onAddingChange]);
 
   const handleSubmit = () => {
     if (!text) return;

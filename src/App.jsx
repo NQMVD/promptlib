@@ -135,7 +135,7 @@ const App = () => {
           e.preventDefault();
           const prompt = prompts.find((p) => p.id === selectedPromptId);
           if (prompt) {
-            const modes = ["none", "compare", "iterate"];
+            const modes = ["none", "compare", "evolve"];
             const currentIndex = modes.indexOf(prompt.mode);
             const nextIndex = (currentIndex + 1) % modes.length;
             updatePromptMode(selectedPromptId, modes[nextIndex]);
@@ -147,7 +147,7 @@ const App = () => {
             // New entry in modal
             const prompt = prompts.find((p) => p.id === selectedPromptId);
             if (prompt?.mode === "compare") addBenchmarkBtnRef.current?.click();
-            if (prompt?.mode === "iterate") addThoughtBtnRef.current?.click();
+            if (prompt?.mode === "evolve") addThoughtBtnRef.current?.click();
           } else {
             // New prompt in main view
             textareaRef.current?.focus();
@@ -269,7 +269,7 @@ const App = () => {
       id: Date.now() + Math.random(),
       content: content.trim(),
       timestamp: formatDate(new Date()),
-      mode: "none", // none, compare, iterate
+      mode: "none", // none, compare, evolve
       models: [], // [{ id, name, rating, note, timestamp }]
       thoughts: [], // [{ id, text, timestamp }]
     };
@@ -345,7 +345,7 @@ const App = () => {
     );
   };
 
-  const addIterationThought = (id, text) => {
+  const addEvolutionThought = (id, text) => {
     if (!text.trim()) return;
     setPrompts(
       prompts.map((p) =>
@@ -719,9 +719,9 @@ const App = () => {
                             <BarChart2 size={10} /> Compare
                           </span>
                         )}
-                        {prompt.mode === "iterate" && (
+                        {prompt.mode === "evolve" && (
                           <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#AAA0FA]/10 text-[#AAA0FA] text-[10px] font-bold uppercase tracking-wider border border-[#AAA0FA]/20">
-                            <History size={10} /> Iterate
+                            <History size={10} /> Evolve
                           </span>
                         )}
                       </div>
@@ -771,7 +771,7 @@ const App = () => {
                             {prompt.models.length} Models
                           </div>
                         )}
-                      {prompt.mode === "iterate" &&
+                      {prompt.mode === "evolve" &&
                         prompt.thoughts.length > 0 && (
                           <div className="flex items-center gap-1.5 text-[11px] text-[#888]">
                             <Brain size={12} className="text-[#AAA0FA]" />
@@ -904,11 +904,11 @@ const App = () => {
                     </button>
                     <button
                       onClick={() =>
-                        updatePromptMode(selectedPrompt.id, "iterate")
+                        updatePromptMode(selectedPrompt.id, "evolve")
                       }
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "iterate" ? "bg-[#AAA0FA]/20 text-[#AAA0FA]" : "text-[#555] hover:text-[#AAA0FA]/50"}`}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "evolve" ? "bg-[#AAA0FA]/20 text-[#AAA0FA]" : "text-[#555] hover:text-[#AAA0FA]/50"}`}
                     >
-                      <History size={12} /> Iterate
+                      <History size={12} /> Evolve
                     </button>
                   </div>
                   <button
@@ -1155,7 +1155,7 @@ const App = () => {
                   </div>
                 )}
 
-                {selectedPrompt.mode === "iterate" && (
+                {selectedPrompt.mode === "evolve" && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1208,7 +1208,7 @@ const App = () => {
                       <AddThoughtForm
                         ref={addThoughtBtnRef}
                         onAdd={(text) =>
-                          addIterationThought(selectedPrompt.id, text)
+                          addEvolutionThought(selectedPrompt.id, text)
                         }
                       />
                     </div>
@@ -1220,7 +1220,7 @@ const App = () => {
                     <Layout size={40} className="mx-auto mb-4" />
                     <p className="text-sm">
                       Select a mode at the top to track benchmarks or
-                      iterations.
+                      evolutions.
                     </p>
                   </div>
                 )}

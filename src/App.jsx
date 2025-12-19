@@ -837,68 +837,90 @@ const App = () => {
 
                 {/* MODE DEPENDENT CONTENT */}
                 {selectedPrompt.mode === "compare" && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex items-center justify-between border-b border-[#222] pb-4">
                       <div className="flex items-center gap-2">
-                        <TrendingUp size={14} className="text-[#EEB180]" />
+                        <BarChart2 size={16} className="text-[#EEB180]" />
                         <span className="text-[11px] font-bold text-[#EEB180] uppercase tracking-widest">
-                          Model Benchmarks
+                          Model Performance Comparison
                         </span>
+                      </div>
+                      <div className="text-[10px] text-[#888] uppercase font-mono tracking-tighter">
+                        {selectedPrompt.models.length} Data Points
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedPrompt.models.map((m) => (
-                        <div
-                          key={m.id}
-                          className="group/item bg-[#161616] border border-[#222] rounded-2xl p-5 shadow-sm relative"
-                        >
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-bold text-[#f0f0f0] flex items-center gap-2">
-                              <Zap size={14} className="text-[#EEB180]" />{" "}
-                              {m.name}
-                            </h4>
-                            <div className="flex items-center gap-3">
-                              <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star
-                                    key={s}
-                                    size={12}
-                                    className={
-                                      s <= m.rating
-                                        ? "text-yellow-500 fill-yellow-500"
-                                        : "text-[#333]"
+                    <div className="space-y-3">
+                      {[...selectedPrompt.models]
+                        .sort((a, b) => b.rating - a.rating)
+                        .map((m, idx) => (
+                          <div
+                            key={m.id}
+                            className="group/item bg-[#0d0d0d] border border-[#222] rounded-xl overflow-hidden hover:border-[#EEB180]/30 transition-all"
+                          >
+                            <div className="flex flex-col md:flex-row">
+                              {/* Left: Stats & Name */}
+                              <div className="p-4 md:w-1/3 border-b md:border-b-0 md:border-r border-[#222] bg-[#111]/50">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-[#444] font-mono">
+                                      #{idx + 1}
+                                    </span>
+                                    <h4 className="font-bold text-[#f0f0f0] truncate">
+                                      {m.name}
+                                    </h4>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      removeModelResult(selectedPrompt.id, m.id)
                                     }
-                                  />
-                                ))}
+                                    className="opacity-0 group-hover/item:opacity-100 p-1 text-[#666] hover:text-red-500 transition-all"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <div className="flex justify-between text-[9px] uppercase font-bold text-[#666] mb-1">
+                                    <span>Score</span>
+                                    <span className="text-[#EEB180]">{(m.rating * 20)}%</span>
+                                  </div>
+                                  <div className="h-1.5 w-full bg-[#1a1a1a] rounded-full overflow-hidden">
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${(m.rating / 5) * 100}%` }}
+                                      className="h-full bg-linear-to-r from-[#EEB180]/50 to-[#EEB180]" 
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                              <button
-                                onClick={() =>
-                                  removeModelResult(selectedPrompt.id, m.id)
-                                }
-                                className="opacity-0 group-hover/item:opacity-100 p-1 text-[#666] hover:text-red-500 transition-all"
-                                title="Remove benchmark"
-                              >
-                                <Trash2 size={12} />
-                              </button>
+
+                              {/* Right: Observations */}
+                              <div className="p-4 flex-1 flex flex-col justify-between">
+                                <div className="mb-4">
+                                  <span className="text-[9px] uppercase font-bold text-[#666] block mb-1">Observations</span>
+                                  <p className="text-sm text-[#ddd] leading-relaxed italic">
+                                    "{m.note || "No specific observations recorded."}"
+                                  </p>
+                                </div>
+                                <div className="text-[9px] font-mono text-[#888] uppercase flex items-center gap-2">
+                                  <span>LOGGED</span>
+                                  <span>{m.timestamp}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <p className="text-xs text-[#ddd] leading-relaxed italic">
-                            "{m.note}"
-                          </p>
-                          <div className="mt-4 text-[9px] font-mono text-[#666] uppercase">
-                            {m.timestamp}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
 
                       {/* Add Model Form */}
-                      <AddModelForm
-                        ref={addBenchmarkBtnRef}
-                        onAdd={(data) =>
-                          addModelResult(selectedPrompt.id, data)
-                        }
-                      />
+                      <div className="pt-4">
+                        <AddModelForm
+                          ref={addBenchmarkBtnRef}
+                          onAdd={(data) =>
+                            addModelResult(selectedPrompt.id, data)
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

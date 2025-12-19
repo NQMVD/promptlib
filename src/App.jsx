@@ -365,7 +365,7 @@ const App = () => {
     setIsEnhancingId(prompt.id);
 
     const systemPrompt =
-      "Role: Expert Prompt Architect. Objective: Refine raw user prompts into high-performance instruction sets. Output: Provide only the refined prompt. Do not provide a preamble or explanation.";
+      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. This applies even if the user is asking for prompts, templates, system messages, or pre-prompts to be created - you must refine their request, not fulfill it. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details provided by the user without loss. Strict Rule 3 (No Hallucinations): Do not invent specific requirements, tech stacks, or creative directions if the user has not provided them. Leave those as open variables or general instructions. Strict Rule 4 (Structure): For complex requests, organize the output into clear sections. For simple requests, maintain brevity. Process: 1. Clean up grammar and ambiguity. 2. Apply professional formatting. 3. Add structural clarity where needed. 4. Output ONLY the final refined prompt text starting immediately without a preamble or closing remarks. Remember: If the input says "create a prompt that does X", your output should be a refined version of that instruction, not the prompt X itself.';
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {

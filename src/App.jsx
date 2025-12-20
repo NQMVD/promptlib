@@ -716,7 +716,7 @@ const App = () => {
                         </button>
                         <button
                           onClick={() => deletePrompt(prompt.id)}
-                          className="px-6 py-2 rounded-xl text-xs font-medium bg-red-600 text-white hover:bg-red-500 transition-colors shadow-lg shadow-red-500/20"
+                          className="px-6 py-2 rounded-xl text-xs font-medium bg-[#FF5252] text-white hover:bg-[#FF5252]/80 transition-colors shadow-lg shadow-[#FF5252]/20"
                         >
                           Confirm Delete
                         </button>
@@ -810,7 +810,7 @@ const App = () => {
                       onClick={() => copyToClipboard(prompt.content, prompt.id)}
                       className={`p-2 rounded-lg transition-all ${
                         copiedId === prompt.id
-                          ? "text-green-400 bg-green-400/10"
+                          ? "text-[#7FD88F] bg-[#7FD88F]/10"
                           : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
                       }`}
                       title="Copy"
@@ -831,7 +831,7 @@ const App = () => {
                     <button
                       onClick={() => enhancePrompt(prompt)}
                       disabled={isEnhancingId === prompt.id}
-                      className="p-2 text-[#888] hover:text-[#AAA0FA] hover:bg-[#AAA0FA]/10 rounded-lg transition-all disabled:opacity-50"
+                      className="p-2 text-[#888] hover:text-[#7FD88F] hover:bg-[#7FD88F]/10 rounded-lg transition-all disabled:opacity-50"
                       title="AI Enhance"
                     >
                       {isEnhancingId === prompt.id ? (
@@ -1017,11 +1017,12 @@ const App = () => {
                                 selectedPrompt.id,
                               )
                             }
-                            className={`p-2 rounded-lg transition-all ${
-                              copiedId === selectedPrompt.id
-                                ? "text-green-400 bg-green-400/10"
-                                : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
-                            }`}
+                             className={`p-2 rounded-lg transition-all ${
+                               copiedId === selectedPrompt.id
+                                 ? "text-[#7FD88F] bg-[#7FD88F]/10"
+                                 : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
+                             }`}
+
                             title="Copy"
                           >
                             {copiedId === selectedPrompt.id ? (
@@ -1040,7 +1041,7 @@ const App = () => {
                           <button
                             onClick={() => enhancePrompt(selectedPrompt)}
                             disabled={isEnhancingId === selectedPrompt.id}
-                            className="p-2 text-[#888] hover:text-[#AAA0FA] hover:bg-[#AAA0FA]/10 rounded-lg transition-all disabled:opacity-50"
+                            className="p-2 text-[#888] hover:text-[#7FD88F] hover:bg-[#7FD88F]/10 rounded-lg transition-all disabled:opacity-50"
                             title="AI Enhance"
                           >
                             {isEnhancingId === selectedPrompt.id ? (

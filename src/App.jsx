@@ -98,6 +98,69 @@ const App = () => {
   const addBenchmarkBtnRef = useRef(null);
   const addThoughtBtnRef = useRef(null);
 
+  // Keyboard shortcuts and Escape handling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Escape handling
+      if (e.key === "Escape") {
+        if (selectedPromptId) {
+          if (
+            document.activeElement &&
+            (document.activeElement.tagName === "INPUT" ||
+              document.activeElement.tagName === "TEXTAREA")
+          ) {
+            document.activeElement.blur();
+          } else {
+            setSelectedPromptId(null);
+          }
+          return;
+        }
+      }
+
+      // Global shortcuts (when not typing in an input)
+      const isTyping =
+        document.activeElement &&
+        (document.activeElement.tagName === "INPUT" ||
+          document.activeElement.tagName === "TEXTAREA");
+
+      if (!isTyping) {
+        if (e.key === "Tab" && selectedPromptId && !isAddingModel) {
+          e.preventDefault();
+          const prompt = prompts.find((p) => p.id === selectedPromptId);
+          if (prompt) {
+            const modes = ["none", "compare", "evolve"];
+            const currentIndex = modes.indexOf(prompt.mode);
+            const nextIndex = (currentIndex + 1) % modes.length;
+            updatePromptMode(selectedPromptId, modes[nextIndex]);
+          }
+        }
+        if (e.key === "n") {
+          e.preventDefault();
+          if (selectedPromptId) {
+            // New entry in modal
+            const prompt = prompts.find((p) => p.id === selectedPromptId);
+            if (prompt?.mode === "compare") addBenchmarkBtnRef.current?.click();
+            if (prompt?.mode === "evolve") addThoughtBtnRef.current?.click();
+          } else {
+            // New prompt in main view
+            textareaRef.current?.focus();
+          }
+        }
+        if (e.key === "s" && !selectedPromptId) {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        }
+        if (e.key === "c" && selectedPromptId) {
+          e.preventDefault();
+          const prompt = prompts.find((p) => p.id === selectedPromptId);
+          if (prompt) copyToClipboard(prompt.content, prompt.id);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedPromptId, prompts, isAddingModel]);
+
   const formatDate = (date) => {
     const d = new Date(date);
     const day = String(d.getDate()).padStart(2, "0");
@@ -260,12 +323,12 @@ const App = () => {
   };
 
   const updatePromptMode = (id, mode) => {
-    setPrompts(prompts.map((p) => (p.id === id ? { ...p, mode } : p)));
+    setPrompts((prev) => prev.map((p) => (p.id === id ? { ...p, mode } : p)));
   };
 
   const addModelResult = (id, modelData) => {
-    setPrompts(
-      prompts.map((p) =>
+    setPrompts((prev) =>
+      prev.map((p) =>
         p.id === id
           ? {
               ...p,
@@ -284,8 +347,8 @@ const App = () => {
   };
 
   const removeModelResult = (promptId, modelId) => {
-    setPrompts(
-      prompts.map((p) =>
+    setPrompts((prev) =>
+      prev.map((p) =>
         p.id === promptId
           ? {
               ...p,
@@ -298,8 +361,8 @@ const App = () => {
 
   const addEvolutionThought = (id, text) => {
     if (!text.trim()) return;
-    setPrompts(
-      prompts.map((p) =>
+    setPrompts((prev) =>
+      prev.map((p) =>
         p.id === id
           ? {
               ...p,
@@ -703,7 +766,7 @@ const App = () => {
                       <div className="flex gap-2 items-center">
                         {prompt.parentId && (
                           <div
-                            className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
+                            className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border flex items-center gap-1"
                             style={{
                               color:
                                 prompt.relationType === "enhanced"
@@ -719,7 +782,8 @@ const App = () => {
                                   : "#AAA0FA22",
                             }}
                           >
-                            {prompt.relationType}
+                            <Sparkles size={10} />
+                            {prompt.relationType.toUpperCase()}
                           </div>
                         )}
                         {prompt.mode === "compare" && (
@@ -734,7 +798,7 @@ const App = () => {
                         )}
                       </div>
                       {lineage.versions.length > 1 && (
-                        <div className="text-[10px] font-mono text-[#555] uppercase tracking-tighter">
+                        <div className="text-[10px] font-mono text-[#555] uppercase tracking-widest">
                           Version {activeIndex + 1} of {lineage.versions.length}
                         </div>
                       )}
@@ -828,7 +892,7 @@ const App = () => {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <div className="text-[11px] font-mono text-[#555] uppercase tracking-tighter">
+                        <div className="text-[11px] font-mono text-[#555] uppercase tracking-widest">
                           {prompt.timestamp}
                         </div>
                         {(prompt.models.length > 0 ||
@@ -986,11 +1050,37 @@ const App = () => {
 
               <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                 <div className="mb-8">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MessageSquare size={14} className="text-[#444]" />
-                    <span className="text-[11px] font-bold text-[#444] uppercase tracking-widest">
-                      Base Prompt
-                    </span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare size={14} className="text-[#444]" />
+                      <span className="text-[11px] font-bold text-[#444] uppercase tracking-widest">
+                        {selectedPrompt.parentId
+                          ? "Version Content"
+                          : "Base Prompt"}
+                      </span>
+                    </div>
+                    {selectedPrompt.parentId && (
+                      <div
+                        className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border flex items-center gap-1"
+                        style={{
+                          color:
+                            selectedPrompt.relationType === "enhanced"
+                              ? "#7FD88F"
+                              : "#AAA0FA",
+                          backgroundColor:
+                            selectedPrompt.relationType === "enhanced"
+                              ? "#7FD88F11"
+                              : "#AAA0FA11",
+                          borderColor:
+                            selectedPrompt.relationType === "enhanced"
+                              ? "#7FD88F22"
+                              : "#AAA0FA22",
+                        }}
+                      >
+                        <Sparkles size={10} />
+                        {selectedPrompt.relationType.toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <div className="bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 relative group overflow-hidden">
                     <AnimatePresence>
@@ -1122,7 +1212,7 @@ const App = () => {
                           Model Performance Comparison
                         </span>
                       </div>
-                      <div className="text-[10px] text-[#888] uppercase font-mono tracking-tighter">
+                      <div className="text-[10px] text-[#888] uppercase font-mono tracking-widest">
                         {selectedPrompt.models.length} Data Points
                       </div>
                     </div>

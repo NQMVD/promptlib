@@ -78,7 +78,6 @@ const App = () => {
   const [apiKeys, setApiKeys] = useState(() => {
     const saved = localStorage.getItem("api_keys");
     if (saved) return JSON.parse(saved);
-    // Legacy support
     return {
       openrouter:
         localStorage.getItem("openrouter_api_key") ||
@@ -108,84 +107,6 @@ const App = () => {
     const minutes = String(d.getMinutes()).padStart(2, "0");
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
-
-  // Keyboard shortcuts and Escape handling
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Escape handling
-      if (e.key === "Escape") {
-        if (selectedPromptId) {
-          if (
-            document.activeElement &&
-            (document.activeElement.tagName === "INPUT" ||
-              document.activeElement.tagName === "TEXTAREA")
-          ) {
-            document.activeElement.blur();
-          } else {
-            setSelectedPromptId(null);
-          }
-          return;
-        }
-      }
-
-      // Global shortcuts (when not typing in an input)
-      const isTyping =
-        document.activeElement &&
-        (document.activeElement.tagName === "INPUT" ||
-          document.activeElement.tagName === "TEXTAREA");
-
-      if (!isTyping) {
-        if (e.key === "Tab" && selectedPromptId && !isAddingModel) {
-          e.preventDefault();
-          const prompt = prompts.find((p) => p.id === selectedPromptId);
-          if (prompt) {
-            const modes = ["none", "compare", "evolve"];
-            const currentIndex = modes.indexOf(prompt.mode);
-            const nextIndex = (currentIndex + 1) % modes.length;
-            updatePromptMode(selectedPromptId, modes[nextIndex]);
-          }
-        }
-        if (e.key === "n") {
-          e.preventDefault();
-          if (selectedPromptId) {
-            // New entry in modal
-            const prompt = prompts.find((p) => p.id === selectedPromptId);
-            if (prompt?.mode === "compare") addBenchmarkBtnRef.current?.click();
-            if (prompt?.mode === "evolve") addThoughtBtnRef.current?.click();
-          } else {
-            // New prompt in main view
-            textareaRef.current?.focus();
-          }
-        }
-        if (e.key === "s" && !selectedPromptId) {
-          e.preventDefault();
-          searchInputRef.current?.focus();
-        }
-        if (e.key === "c" && selectedPromptId) {
-          e.preventDefault();
-          const prompt = prompts.find((p) => p.id === selectedPromptId);
-          if (prompt) copyToClipboard(prompt.content, prompt.id);
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPromptId, prompts, isAddingModel]);
-
-  // Auto-resize textareas
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [newPrompt]);
-
-  useEffect(() => {
-    if (editRef.current) {
-      editRef.current.style.height = "auto";
-      editRef.current.style.height = `${editRef.current.scrollHeight}px`;
-    }
-  }, [editContent]);
 
   // Persistence
   useEffect(() => {
@@ -221,7 +142,6 @@ const App = () => {
 
   const handleProviderChange = (newProvider) => {
     setProvider(newProvider);
-    // Optionally reset modelId to default for that provider
     setModelId(PROVIDERS[newProvider].defaultModel);
   };
 
@@ -241,7 +161,6 @@ const App = () => {
   const importLibrary = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -278,16 +197,15 @@ const App = () => {
       id: newId,
       content: content.trim(),
       timestamp: formatDate(new Date()),
-      mode: "none", // none, compare, evolve
-      models: [], // [{ id, name, rating, note, timestamp }]
-      thoughts: [], // [{ id, text, timestamp }]
+      mode: "none",
+      models: [],
+      thoughts: [],
       parentId,
       relationType,
     };
 
     setPrompts((prev) => {
       const updated = [promptObj, ...prev];
-      // If this is a child, find the root and update active index to the new version
       if (parentId) {
         const promptMap = new Map(updated.map((p) => [p.id, p]));
         let root = promptMap.get(parentId);
@@ -295,11 +213,9 @@ const App = () => {
           root = promptMap.get(root.parentId);
         }
         if (root) {
-          // We'll calculate the new index in an effect or just reset it here
-          // Since we don't have the final versions list yet, we'll clear the override
           setLineageActiveIndices((prevIdx) => {
             const next = { ...prevIdx };
-            delete next[root.id]; // Reset to default (latest)
+            delete next[root.id];
             return next;
           });
         }
@@ -312,17 +228,7 @@ const App = () => {
   };
 
   const deletePrompt = (id) => {
-    setPrompts((prev) => {
-      const updated = prev.filter((p) => p.id !== id);
-      // Clean up active indices if needed
-      setLineageActiveIndices((prevIdx) => {
-        const next = { ...prevIdx };
-        // This is a bit complex to map back to root,
-        // but resetting on any delete is safe-ish for the default latest view
-        return next;
-      });
-      return updated;
-    });
+    setPrompts((prev) => prev.filter((p) => p.id !== id));
     setConfirmDeleteId(null);
     if (selectedPromptId === id) {
       setSelectedPromptId(null);
@@ -335,6 +241,8 @@ const App = () => {
       ...prompt,
       id: Date.now() + Math.random(),
       timestamp: formatDate(new Date()) + " (Copy)",
+      parentId: null,
+      relationType: null,
     };
     setPrompts([duplicated, ...prompts]);
   };
@@ -416,9 +324,8 @@ const App = () => {
       return;
     }
     setIsEnhancingId(prompt.id);
-
     const systemPrompt =
-      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. This applies even if the user is asking for prompts, templates, system messages, or pre-prompts to be created - you must refine their request, not fulfill it. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details provided by the user without loss. Strict Rule 3 (No Hallucinations): Do not invent specific requirements, tech stacks, or creative directions if the user has not provided them. Leave those as open variables or general instructions. Strict Rule 4 (Structure): For complex requests, organize the output into clear sections. For simple requests, maintain brevity. Process: 1. Clean up grammar and ambiguity. 2. Apply professional formatting. 3. Add structural clarity where needed. 4. Output ONLY the final refined prompt text starting immediately without a preamble or closing remarks, not even a small \"Enhanced Prompt:\" prefix!. Remember: If the input says "create a prompt that does X", your output should be a refined version of that instruction, not the prompt X itself.';
+      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details. Strict Rule 3 (No Hallucinations): Do not invent specific requirements. Process: 1. Clean grammar. 2. Apply formatting. 3. Add structure. Output ONLY refined prompt text.';
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -464,10 +371,9 @@ const App = () => {
       return;
     }
     setIsEvolvingId(prompt.id);
-
     const thoughtsList = prompt.thoughts.map((t) => `- ${t.text}`).join("\n");
     const systemPrompt =
-      "Role: Prompt Evolution Specialist. Task: Evolve the base prompt by integrating the user's feedback, corrections, and additional thoughts into an improved version. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the evolved version of the prompt itself, not the result of executing it. Strict Rule 2 (Preserve Intent): Maintain the core purpose and structure of the base prompt while seamlessly incorporating all user feedback. Strict Rule 3 (Complete Integration): Address every piece of feedback provided - whether corrections, additions, clarifications, or modifications. Do not ignore or dismiss any user input. Strict Rule 4 (Fidelity): When feedback specifies technical details, constraints, or requirements, integrate them exactly as stated without substitution or interpretation. Strict Rule 5 (No Hallucinations): Do not add features, requirements, or details beyond what's in the base prompt or user feedback. Process: 1. Identify what works in the base prompt. 2. Apply all corrections and modifications from the feedback. 3. Integrate new requirements or clarifications. 4. Ensure coherent structure and clear language. 5. Output ONLY the final evolved prompt text starting immediately without a preamble or closing remarks, not even a small \"Evolved Prompt:\" prefix!";
+      "Role: Prompt Evolution Specialist. Task: Evolve the base prompt by integrating user feedback and thoughts. Output ONLY the evolved prompt text.";
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -502,7 +408,6 @@ const App = () => {
       const evolvedText = data.choices?.[0]?.message?.content;
       if (evolvedText) {
         addPrompt(evolvedText, prompt.id, "evolved");
-        alert("New evolved prompt created!");
       }
     } catch (err) {
       console.error("Evolve failed:", err);
@@ -527,7 +432,6 @@ const App = () => {
 
     return roots
       .map((root) => {
-        // Find all descendants
         const versions = [];
         const queue = [root];
         const visited = new Set();
@@ -537,18 +441,16 @@ const App = () => {
           if (visited.has(current.id)) continue;
           visited.add(current.id);
           versions.push(current);
-
           const children = allPrompts.filter((p) => p.parentId === current.id);
           queue.push(...children);
         }
 
-        // Sort versions by ID (which is timestamp-based)
         return {
           rootId: root.id,
           versions: versions.sort((a, b) => a.id - b.id),
         };
       })
-      .sort((a, b) => b.rootId - a.rootId); // Sort lineages by root ID (newest first)
+      .sort((a, b) => b.rootId - a.rootId);
   };
 
   const selectedPrompt = prompts.find((p) => p.id === selectedPromptId);
@@ -659,7 +561,6 @@ const App = () => {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. gpt-4"
                         className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
                         value={modelId}
                         onChange={(e) => setModelId(e.target.value)}
@@ -673,14 +574,10 @@ const App = () => {
                       </label>
                       <input
                         type="password"
-                        placeholder="Enter API Key"
                         className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
                         value={apiKeys[provider] || ""}
                         onChange={(e) => updateApiKey(e.target.value)}
                       />
-                      <p className="mt-2 text-[10px] text-[#444]">
-                        Keys are stored locally in your browser per provider.
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -698,9 +595,6 @@ const App = () => {
               placeholder="Paste or type a prompt here..."
               value={newPrompt}
               onChange={(e) => setNewPrompt(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.metaKey) addPrompt();
-              }}
             />
             <div className="flex items-center justify-between px-5 py-3 border-t border-[#262626] bg-[#1a1a1a]/50">
               <span className="text-[10px] text-[#555] font-mono tracking-widest">
@@ -773,7 +667,6 @@ const App = () => {
                     if (editingId !== prompt.id) setSelectedPromptId(prompt.id);
                   }}
                 >
-                  {/* Delete Confirmation Overlay */}
                   <AnimatePresence>
                     {confirmDeleteId === prompt.id && (
                       <motion.div
@@ -783,10 +676,7 @@ const App = () => {
                         className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <AlertCircle
-                          className="text-[#FF5252] mb-3"
-                          size={28}
-                        />
+                        <AlertCircle className="text-[#FF5252] mb-3" size={28} />
                         <p className="text-sm font-medium text-[#f0f0f0] mb-5">
                           Delete this version forever?
                         </p>
@@ -809,7 +699,6 @@ const App = () => {
                   </AnimatePresence>
 
                   <div className="p-5 flex flex-col h-full">
-                    {/* Top Bar with Mode and Navigation */}
                     <div className="flex justify-between items-center mb-4">
                       <div className="flex gap-2 items-center">
                         {prompt.parentId && (
@@ -844,7 +733,6 @@ const App = () => {
                           </span>
                         )}
                       </div>
-
                       {lineage.versions.length > 1 && (
                         <div className="text-[10px] font-mono text-[#555] uppercase tracking-tighter">
                           Version {activeIndex + 1} of {lineage.versions.length}
@@ -887,10 +775,9 @@ const App = () => {
                       )}
                     </div>
 
-                    {/* Footer with Slider and Stats */}
                     <div className="mt-6 pt-4 border-t border-[#222]/50 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        {lineage.versions.length > 1 ? (
+                        {lineage.versions.length > 1 && (
                           <div
                             className="flex items-center gap-1 bg-[#0a0a0a] rounded-lg p-1 border border-[#222]"
                             onClick={(e) => e.stopPropagation()}
@@ -900,10 +787,7 @@ const App = () => {
                               onClick={() =>
                                 setLineageActiveIndices((prev) => ({
                                   ...prev,
-                                  [lineage.rootId]: Math.max(
-                                    0,
-                                    activeIndex - 1,
-                                  ),
+                                  [lineage.rootId]: Math.max(0, activeIndex - 1),
                                 }))
                               }
                               className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
@@ -940,23 +824,26 @@ const App = () => {
                               <ChevronRight size={14} />
                             </button>
                           </div>
-                        ) : (
-                          <div className="text-[10px] font-mono text-[#444] uppercase tracking-tighter">
-                            {prompt.timestamp}
-                          </div>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="text-[11px] font-mono text-[#555] uppercase tracking-tighter">
+                          {prompt.timestamp}
+                        </div>
+                        {(prompt.models.length > 0 ||
+                          prompt.thoughts.length > 0) && (
+                          <span className="text-[#444] opacity-40">·</span>
+                        )}
                         {prompt.models.length > 0 && (
-                          <div className="flex items-center gap-1 text-[10px] text-[#666]">
-                            <Zap size={10} className="text-[#EEB180]" />
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#777]">
+                            <Zap size={11} className="text-[#EEB180]" />
                             {prompt.models.length}
                           </div>
                         )}
                         {prompt.thoughts.length > 0 && (
-                          <div className="flex items-center gap-1 text-[10px] text-[#666]">
-                            <Brain size={10} className="text-[#AAA0FA]" />
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#777]">
+                            <Brain size={11} className="text-[#AAA0FA]" />
                             {prompt.thoughts.length}
                           </div>
                         )}
@@ -964,10 +851,9 @@ const App = () => {
                     </div>
                   </div>
 
-                  {/* Horizontal Action Bar */}
                   {editingId !== prompt.id && !confirmDeleteId && (
                     <div
-                      className="absolute bottom-16 right-4 flex flex-row items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-0.5 rounded-xl shadow-2xl"
+                      className="absolute bottom-14 right-4 flex flex-row items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-0.5 rounded-xl shadow-2xl"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
@@ -1029,7 +915,6 @@ const App = () => {
         </div>
       </main>
 
-      {/* OVERHAUL MODAL */}
       <AnimatePresence>
         {selectedPrompt && (
           <motion.div
@@ -1045,7 +930,6 @@ const App = () => {
               className="absolute inset-0 bg-black/40 backdrop-blur-xl"
               onClick={() => setSelectedPromptId(null)}
             />
-
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -1069,9 +953,7 @@ const App = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-[#222] mr-4">
                     <button
-                      onClick={() =>
-                        updatePromptMode(selectedPrompt.id, "none")
-                      }
+                      onClick={() => updatePromptMode(selectedPrompt.id, "none")}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${selectedPrompt.mode === "none" ? "bg-[#222] text-white" : "text-[#555] hover:text-[#888]"}`}
                     >
                       Standard
@@ -1103,7 +985,6 @@ const App = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                {/* Base Prompt Display */}
                 <div className="mb-8">
                   <div className="flex items-center gap-2 mb-3">
                     <MessageSquare size={14} className="text-[#444]" />
@@ -1112,7 +993,6 @@ const App = () => {
                     </span>
                   </div>
                   <div className="bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 relative group overflow-hidden">
-                    {/* Delete Confirmation Overlay for Modal */}
                     <AnimatePresence>
                       {confirmDeleteId === selectedPrompt.id && (
                         <motion.div
@@ -1122,10 +1002,7 @@ const App = () => {
                           className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <AlertCircle
-                            className="text-red-500 mb-3"
-                            size={28}
-                          />
+                          <AlertCircle className="text-[#FF5252] mb-3" size={28} />
                           <p className="text-sm font-medium text-[#f0f0f0] mb-5">
                             Delete this prompt forever?
                           </p>
@@ -1138,7 +1015,7 @@ const App = () => {
                             </button>
                             <button
                               onClick={() => deletePrompt(selectedPrompt.id)}
-                              className="px-6 py-2 rounded-xl text-xs font-medium bg-red-600 text-white hover:bg-red-500 transition-colors shadow-lg shadow-red-500/20"
+                              className="px-6 py-2 rounded-xl text-xs font-medium bg-[#FF5252] text-white hover:bg-[#FF5252]/80 transition-colors shadow-lg shadow-[#FF5252]/20"
                             >
                               Confirm Delete
                             </button>
@@ -1224,10 +1101,8 @@ const App = () => {
                             <CopyPlus size={16} />
                           </button>
                           <button
-                            onClick={() =>
-                              setConfirmDeleteId(selectedPrompt.id)
-                            }
-                            className="p-2 text-[#888] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                            onClick={() => setConfirmDeleteId(selectedPrompt.id)}
+                            className="p-2 text-[#888] hover:text-[#FF5252] hover:bg-[#FF5252]/10 rounded-lg transition-all"
                             title="Delete"
                           >
                             <Trash2 size={16} />
@@ -1238,7 +1113,6 @@ const App = () => {
                   </div>
                 </div>
 
-                {/* MODE DEPENDENT CONTENT */}
                 {selectedPrompt.mode === "compare" && (
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between border-b border-[#222] pb-4">
@@ -1252,7 +1126,6 @@ const App = () => {
                         {selectedPrompt.models.length} Data Points
                       </div>
                     </div>
-
                     <div className="space-y-3">
                       {[...selectedPrompt.models]
                         .sort((a, b) => b.rating - a.rating)
@@ -1262,7 +1135,6 @@ const App = () => {
                             className="group/item bg-[#0d0d0d] border border-[#222] rounded-xl overflow-hidden hover:border-[#EEB180]/30 transition-all"
                           >
                             <div className="flex flex-col md:flex-row">
-                              {/* Left: Stats & Name */}
                               <div className="p-4 md:w-1/3 border-b md:border-b-0 md:border-r border-[#222] bg-[#111]/50">
                                 <div className="flex items-center gap-2 mb-3">
                                   <span className="text-[14.5px] font-bold text-[#444] font-mono shrink-0">
@@ -1272,7 +1144,6 @@ const App = () => {
                                     {m.name}
                                   </h4>
                                 </div>
-
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-[9px] uppercase font-bold text-[#666] mb-1">
                                     <span>Score</span>
@@ -1291,8 +1162,6 @@ const App = () => {
                                   </div>
                                 </div>
                               </div>
-
-                              {/* Right: Observations */}
                               <div className="p-4 flex-1 flex flex-col justify-between">
                                 <div className="mb-4">
                                   <div className="flex justify-between items-start mb-1">
@@ -1306,8 +1175,7 @@ const App = () => {
                                           m.id,
                                         )
                                       }
-                                      className="opacity-0 group-hover/item:opacity-100 p-1 text-[#444] hover:text-red-500 transition-all"
-                                      title="Remove entry"
+                                      className="opacity-0 group-hover/item:opacity-100 p-1 text-[#444] hover:text-[#FF5252] transition-all"
                                     >
                                       <Trash2 size={14} />
                                     </button>
@@ -1324,15 +1192,11 @@ const App = () => {
                             </div>
                           </div>
                         ))}
-
-                      {/* Add Model Form */}
                       <div className="pt-4">
                         <AddModelForm
                           ref={addBenchmarkBtnRef}
                           onAddingChange={setIsAddingModel}
-                          onAdd={(data) =>
-                            addModelResult(selectedPromptId, data)
-                          }
+                          onAdd={(data) => addModelResult(selectedPromptId, data)}
                         />
                       </div>
                     </div>
@@ -1364,7 +1228,6 @@ const App = () => {
                         Evolve New Version
                       </button>
                     </div>
-
                     <div className="space-y-4">
                       {selectedPrompt.thoughts.map((t, idx) => (
                         <div key={t.id} className="flex gap-4">
@@ -1388,24 +1251,11 @@ const App = () => {
                           </div>
                         </div>
                       ))}
-
                       <AddThoughtForm
                         ref={addThoughtBtnRef}
-                        onAdd={(text) =>
-                          addEvolutionThought(selectedPrompt.id, text)
-                        }
+                        onAdd={(text) => addEvolutionThought(selectedPrompt.id, text)}
                       />
                     </div>
-                  </div>
-                )}
-
-                {selectedPrompt.mode === "none" && (
-                  <div className="py-20 text-center opacity-30">
-                    <Layout size={40} className="mx-auto mb-4" />
-                    <p className="text-sm">
-                      Select a mode at the top to track benchmarks or
-                      evolutions.
-                    </p>
                   </div>
                 )}
               </div>
@@ -1428,36 +1278,16 @@ const App = () => {
   );
 };
 
-// Sub-components for better organization
 const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(0);
   const [note, setNote] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-
   useEffect(() => {
     onAddingChange?.(isAdding);
   }, [isAdding, onAddingChange]);
-
   const ratingContainerRef = useRef(null);
   const noteRef = useRef(null);
-
-  useEffect(() => {
-    const handleNumKey = (e) => {
-      // Only handle if this specific form is focused/active
-      if (
-        isAdding &&
-        (document.activeElement?.closest(".add-benchmark-form") ||
-          document.activeElement === ratingContainerRef.current)
-      ) {
-        if (["1", "2", "3", "4", "5"].includes(e.key)) {
-          setRating(parseInt(e.key));
-        }
-      }
-    };
-    window.addEventListener("keydown", handleNumKey);
-    return () => window.removeEventListener("keydown", handleNumKey);
-  }, [isAdding]);
 
   const handleSubmit = () => {
     if (!name || !rating) return;
@@ -1486,7 +1316,6 @@ const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
   return (
     <div className="add-benchmark-form bg-[#0d0d0d] border border-[#EEB180]/30 rounded-xl overflow-hidden animate-in zoom-in-95 duration-200">
       <div className="flex flex-col md:flex-row">
-        {/* Left Input: Stats Area */}
         <div className="p-4 md:w-1/3 border-b md:border-b-0 md:border-r border-[#222] bg-[#111]/50 space-y-4">
           <div className="space-y-1">
             <span className="text-[9px] uppercase font-bold text-[#666] block">
@@ -1498,15 +1327,8 @@ const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
               className="w-full bg-transparent border-none p-0 text-[14.5px] font-bold text-[#f0f0f0] outline-none focus:ring-0 placeholder-[#333]"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  ratingContainerRef.current?.focus();
-                }
-              }}
             />
           </div>
-
           <div className="space-y-1">
             <div className="flex justify-between text-[9px] uppercase font-bold text-[#666]">
               <span>Rating</span>
@@ -1514,19 +1336,7 @@ const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
                 {rating > 0 ? rating * 20 : 0}%
               </span>
             </div>
-            <div
-              ref={ratingContainerRef}
-              tabIndex={0}
-              className="flex items-center gap-1.5 focus:outline-none focus:ring-1 focus:ring-[#EEB180]/30 rounded p-1 -ml-1 transition-all"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && name && rating > 0) {
-                  handleSubmit();
-                } else if (e.key === "Tab") {
-                  e.preventDefault();
-                  noteRef.current?.focus();
-                }
-              }}
-            >
+            <div className="flex items-center gap-1.5 p-1 -ml-1">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
@@ -1536,43 +1346,31 @@ const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
                 />
               ))}
             </div>
-            <p className="text-[8px] text-[#444] font-mono uppercase">
-              Use keys 1-5 to rate
-            </p>
           </div>
         </div>
-
-        {/* Right Input: Observations Area */}
         <div className="p-4 flex-1 flex flex-col justify-between">
           <div className="space-y-1 h-full flex flex-col">
             <span className="text-[9px] uppercase font-bold text-[#666] block">
               Observations
             </span>
             <textarea
-              ref={noteRef}
               placeholder="Record your findings..."
               className="w-full flex-1 bg-transparent border-none p-0 text-sm text-[#ddd] outline-none focus:ring-0 resize-none placeholder-[#333] min-h-[60px]"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.metaKey) handleSubmit();
-                if (e.key === "Enter" && !e.metaKey && name && rating > 0)
-                  handleSubmit();
-              }}
             />
           </div>
-
           <div className="mt-4 flex gap-3 justify-end items-center">
             <button
               onClick={() => setIsAdding(false)}
-              className="text-[10px] font-bold text-[#444] hover:text-[#666] uppercase transition-colors"
+              className="text-[10px] font-bold text-[#444] hover:text-[#666] uppercase"
             >
               Discard
             </button>
             <button
               onClick={handleSubmit}
               disabled={!name || !rating}
-              className="bg-[#EEB180] text-black px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-[#EEB180]/10 disabled:opacity-30 active:scale-95 transition-all"
+              className="bg-[#EEB180] text-black px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-[#EEB180]/10"
             >
               Log Data
             </button>
@@ -1586,14 +1384,12 @@ const AddModelForm = React.forwardRef(({ onAdd, onAddingChange }, ref) => {
 const AddThoughtForm = React.forwardRef(({ onAdd }, ref) => {
   const [text, setText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-
   const handleSubmit = () => {
     if (!text) return;
     onAdd(text);
     setText("");
     setIsAdding(false);
   };
-
   if (!isAdding) {
     return (
       <button
@@ -1608,19 +1404,13 @@ const AddThoughtForm = React.forwardRef(({ onAdd }, ref) => {
       </button>
     );
   }
-
   return (
     <div className="bg-[#1a1a1a] border border-[#AAA0FA]/30 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-4 duration-200">
       <textarea
         autoFocus
-        placeholder="What did the model miss? Any corrections or new ideas..."
         className="w-full bg-[#0a0a0a] border border-[#222] rounded-xl px-4 py-3 text-sm h-32 resize-none focus:border-[#AAA0FA] outline-none transition-all"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && e.metaKey) handleSubmit();
-          if (e.key === "Enter" && !e.metaKey && text.trim()) handleSubmit();
-        }}
       />
       <div className="flex gap-2 justify-end">
         <button

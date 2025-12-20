@@ -22,6 +22,7 @@ import {
   Star,
   MessageSquare,
   ArrowRight,
+  ChevronLeft,
   ChevronRight,
   TrendingUp,
   Brain,
@@ -63,6 +64,7 @@ const App = () => {
   const [selectedPromptId, setSelectedPromptId] = useState(null);
   const [isAddingModel, setIsAddingModel] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
+  const [lineageActiveIndices, setLineageActiveIndices] = useState({});
 
   useEffect(() => {
     if (!selectedPromptId) {
@@ -265,10 +267,15 @@ const App = () => {
     event.target.value = "";
   };
 
-  const addPrompt = (content = newPrompt, parentId = null, relationType = null) => {
+  const addPrompt = (
+    content = newPrompt,
+    parentId = null,
+    relationType = null,
+  ) => {
     if (!content.trim()) return;
+    const newId = Date.now() + Math.random();
     const promptObj = {
-      id: Date.now() + Math.random(),
+      id: newId,
       content: content.trim(),
       timestamp: formatDate(new Date()),
       mode: "none", // none, compare, evolve
@@ -277,13 +284,45 @@ const App = () => {
       parentId,
       relationType,
     };
-    setPrompts([promptObj, ...prompts]);
+
+    setPrompts((prev) => {
+      const updated = [promptObj, ...prev];
+      // If this is a child, find the root and update active index to the new version
+      if (parentId) {
+        const promptMap = new Map(updated.map((p) => [p.id, p]));
+        let root = promptMap.get(parentId);
+        while (root && root.parentId && promptMap.has(root.parentId)) {
+          root = promptMap.get(root.parentId);
+        }
+        if (root) {
+          // We'll calculate the new index in an effect or just reset it here
+          // Since we don't have the final versions list yet, we'll clear the override
+          setLineageActiveIndices((prevIdx) => {
+            const next = { ...prevIdx };
+            delete next[root.id]; // Reset to default (latest)
+            return next;
+          });
+        }
+      }
+      return updated;
+    });
+
     setNewPrompt("");
-    copyToClipboard(content.trim(), promptObj.id);
+    copyToClipboard(content.trim(), newId);
   };
 
   const deletePrompt = (id) => {
-    setPrompts(prompts.filter((p) => p.id !== id));
+    setPrompts((prev) => {
+      const updated = prev.filter((p) => p.id !== id);
+      // Clean up active indices if needed
+      setLineageActiveIndices((prevIdx) => {
+        const next = { ...prevIdx };
+        // This is a bit complex to map back to root,
+        // but resetting on any delete is safe-ish for the default latest view
+        return next;
+      });
+      return updated;
+    });
     setConfirmDeleteId(null);
     if (selectedPromptId === id) {
       setSelectedPromptId(null);
@@ -379,7 +418,7 @@ const App = () => {
     setIsEnhancingId(prompt.id);
 
     const systemPrompt =
-      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. This applies even if the user is asking for prompts, templates, system messages, or pre-prompts to be created - you must refine their request, not fulfill it. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details provided by the user without loss. Strict Rule 3 (No Hallucinations): Do not invent specific requirements, tech stacks, or creative directions if the user has not provided them. Leave those as open variables or general instructions. Strict Rule 4 (Structure): For complex requests, organize the output into clear sections. For simple requests, maintain brevity. Process: 1. Clean up grammar and ambiguity. 2. Apply professional formatting. 3. Add structural clarity where needed. 4. Output ONLY the final refined prompt text starting immediately without a preamble or closing remarks. Remember: If the input says "create a prompt that does X", your output should be a refined version of that instruction, not the prompt X itself.';
+      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. This applies even if the user is asking for prompts, templates, system messages, or pre-prompts to be created - you must refine their request, not fulfill it. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details provided by the user without loss. Strict Rule 3 (No Hallucinations): Do not invent specific requirements, tech stacks, or creative directions if the user has not provided them. Leave those as open variables or general instructions. Strict Rule 4 (Structure): For complex requests, organize the output into clear sections. For simple requests, maintain brevity. Process: 1. Clean up grammar and ambiguity. 2. Apply professional formatting. 3. Add structural clarity where needed. 4. Output ONLY the final refined prompt text starting immediately without a preamble or closing remarks, not even a small \"Enhanced Prompt:\" prefix!. Remember: If the input says "create a prompt that does X", your output should be a refined version of that instruction, not the prompt X itself.';
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -428,7 +467,7 @@ const App = () => {
 
     const thoughtsList = prompt.thoughts.map((t) => `- ${t.text}`).join("\n");
     const systemPrompt =
-      "Role: Prompt Evolution Specialist. Task: Evolve the base prompt by integrating the user's feedback, corrections, and additional thoughts into an improved version. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the evolved version of the prompt itself, not the result of executing it. Strict Rule 2 (Preserve Intent): Maintain the core purpose and structure of the base prompt while seamlessly incorporating all user feedback. Strict Rule 3 (Complete Integration): Address every piece of feedback provided - whether corrections, additions, clarifications, or modifications. Do not ignore or dismiss any user input. Strict Rule 4 (Fidelity): When feedback specifies technical details, constraints, or requirements, integrate them exactly as stated without substitution or interpretation. Strict Rule 5 (No Hallucinations): Do not add features, requirements, or details beyond what's in the base prompt or user feedback. Process: 1. Identify what works in the base prompt. 2. Apply all corrections and modifications from the feedback. 3. Integrate new requirements or clarifications. 4. Ensure coherent structure and clear language. 5. Output ONLY the final evolved prompt text starting immediately without a preamble or closing remarks.";
+      "Role: Prompt Evolution Specialist. Task: Evolve the base prompt by integrating the user's feedback, corrections, and additional thoughts into an improved version. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the evolved version of the prompt itself, not the result of executing it. Strict Rule 2 (Preserve Intent): Maintain the core purpose and structure of the base prompt while seamlessly incorporating all user feedback. Strict Rule 3 (Complete Integration): Address every piece of feedback provided - whether corrections, additions, clarifications, or modifications. Do not ignore or dismiss any user input. Strict Rule 4 (Fidelity): When feedback specifies technical details, constraints, or requirements, integrate them exactly as stated without substitution or interpretation. Strict Rule 5 (No Hallucinations): Do not add features, requirements, or details beyond what's in the base prompt or user feedback. Process: 1. Identify what works in the base prompt. 2. Apply all corrections and modifications from the feedback. 3. Integrate new requirements or clarifications. 4. Ensure coherent structure and clear language. 5. Output ONLY the final evolved prompt text starting immediately without a preamble or closing remarks, not even a small \"Evolved Prompt:\" prefix!";
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -478,6 +517,38 @@ const App = () => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     });
+  };
+
+  const getLineages = (allPrompts) => {
+    const promptMap = new Map(allPrompts.map((p) => [p.id, p]));
+    const roots = allPrompts.filter(
+      (p) => !p.parentId || !promptMap.has(p.parentId),
+    );
+
+    return roots
+      .map((root) => {
+        // Find all descendants
+        const versions = [];
+        const queue = [root];
+        const visited = new Set();
+
+        while (queue.length > 0) {
+          const current = queue.shift();
+          if (visited.has(current.id)) continue;
+          visited.add(current.id);
+          versions.push(current);
+
+          const children = allPrompts.filter((p) => p.parentId === current.id);
+          queue.push(...children);
+        }
+
+        // Sort versions by ID (which is timestamp-based)
+        return {
+          rootId: root.id,
+          versions: versions.sort((a, b) => a.id - b.id),
+        };
+      })
+      .sort((a, b) => b.rootId - a.rootId); // Sort lineages by root ID (newest first)
   };
 
   const selectedPrompt = prompts.find((p) => p.id === selectedPromptId);
@@ -665,7 +736,7 @@ const App = () => {
         )}
 
         {/* List Section */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-6">
           {filteredPrompts.length === 0 ? (
             <div className="py-20 text-center border border-dashed border-[#222] rounded-3xl bg-[#0d0d0d]">
               <div className="w-12 h-12 rounded-full bg-[#161616] flex items-center justify-center mx-auto mb-4 border border-[#222]">
@@ -678,57 +749,90 @@ const App = () => {
               </p>
             </div>
           ) : (
-            filteredPrompts.map((prompt) => (
-              <motion.div
-                layout
-                key={prompt.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`group relative bg-[#111] border rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden shadow-md hover:shadow-xl ${
-                  editingId === prompt.id
-                    ? "border-[#444] bg-[#1a1a1a]"
-                    : "border-[#222] hover:border-[#333]"
-                }`}
-                onClick={() => {
-                  if (editingId !== prompt.id) setSelectedPromptId(prompt.id);
-                }}
-              >
-                {/* Delete Confirmation Overlay */}
-                <AnimatePresence>
-                  {confirmDeleteId === prompt.id && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <AlertCircle className="text-red-500 mb-3" size={28} />
-                      <p className="text-sm font-medium text-[#f0f0f0] mb-5">
-                        Delete this prompt forever?
-                      </p>
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="px-6 py-2 rounded-xl text-xs font-medium border border-[#333] hover:bg-[#222] transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => deletePrompt(prompt.id)}
-                          className="px-6 py-2 rounded-xl text-xs font-medium bg-[#FF5252] text-white hover:bg-[#FF5252]/80 transition-colors shadow-lg shadow-[#FF5252]/20"
-                        >
-                          Confirm Delete
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            getLineages(filteredPrompts).map((lineage) => {
+              const activeIndex = Math.min(
+                lineageActiveIndices[lineage.rootId] ??
+                  lineage.versions.length - 1,
+                lineage.versions.length - 1,
+              );
+              const prompt = lineage.versions[activeIndex];
+              if (!prompt) return null;
 
-                <div className="p-4">
-                  {prompt.mode !== "none" && (
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex gap-2">
+              return (
+                <motion.div
+                  layout
+                  key={lineage.rootId}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`group relative bg-[#111] border rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden shadow-md hover:shadow-xl ${
+                    editingId === prompt.id
+                      ? "border-[#444] bg-[#1a1a1a]"
+                      : "border-[#222] hover:border-[#333]"
+                  }`}
+                  onClick={() => {
+                    if (editingId !== prompt.id) setSelectedPromptId(prompt.id);
+                  }}
+                >
+                  {/* Delete Confirmation Overlay */}
+                  <AnimatePresence>
+                    {confirmDeleteId === prompt.id && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <AlertCircle
+                          className="text-[#FF5252] mb-3"
+                          size={28}
+                        />
+                        <p className="text-sm font-medium text-[#f0f0f0] mb-5">
+                          Delete this version forever?
+                        </p>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="px-6 py-2 rounded-xl text-xs font-medium border border-[#333] hover:bg-[#222] transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => deletePrompt(prompt.id)}
+                            className="px-6 py-2 rounded-xl text-xs font-medium bg-[#FF5252] text-white hover:bg-[#FF5252]/80 transition-colors shadow-lg shadow-[#FF5252]/20"
+                          >
+                            Confirm Delete
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="p-5 flex flex-col h-full">
+                    {/* Top Bar with Mode and Navigation */}
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex gap-2 items-center">
+                        {prompt.parentId && (
+                          <div
+                            className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
+                            style={{
+                              color:
+                                prompt.relationType === "enhanced"
+                                  ? "#7FD88F"
+                                  : "#AAA0FA",
+                              backgroundColor:
+                                prompt.relationType === "enhanced"
+                                  ? "#7FD88F11"
+                                  : "#AAA0FA11",
+                              borderColor:
+                                prompt.relationType === "enhanced"
+                                  ? "#7FD88F22"
+                                  : "#AAA0FA22",
+                            }}
+                          >
+                            {prompt.relationType}
+                          </div>
+                        )}
                         {prompt.mode === "compare" && (
                           <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EEB180]/10 text-[#EEB180] text-[10px] font-bold uppercase tracking-wider border border-[#EEB180]/20">
                             <BarChart2 size={10} /> Compare
@@ -740,124 +844,187 @@ const App = () => {
                           </span>
                         )}
                       </div>
-                    </div>
-                  )}
 
-                  {editingId === prompt.id ? (
-                    <div
-                      className="space-y-4"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <textarea
-                        ref={editRef}
-                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4 text-[14.5px] text-[#ddd] focus:border-[#555] focus:ring-0 resize-none min-h-[140px] max-h-[60vh] focus:outline-none overflow-y-auto"
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        autoFocus
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="p-2 text-[#888] hover:text-[#f0f0f0] transition-colors"
+                      {lineage.versions.length > 1 && (
+                        <div className="text-[10px] font-mono text-[#555] uppercase tracking-tighter">
+                          Version {activeIndex + 1} of {lineage.versions.length}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-h-[80px]">
+                      {editingId === prompt.id ? (
+                        <div
+                          className="space-y-4"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <X size={20} />
-                        </button>
-                        <button
-                          onClick={() => saveEdit(prompt.id)}
-                          className="flex items-center gap-2 px-4 py-1.5 bg-[#f0f0f0] text-[#0a0a0a] rounded-lg text-xs font-bold shadow-md"
-                        >
-                          <Save size={14} /> Save Changes
-                        </button>
+                          <textarea
+                            ref={editRef}
+                            className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4 text-[14.5px] text-[#ddd] focus:border-[#555] focus:ring-0 resize-none min-h-[140px] max-h-[60vh] focus:outline-none overflow-y-auto"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            autoFocus
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="p-2 text-[#888] hover:text-[#f0f0f0] transition-colors"
+                            >
+                              <X size={20} />
+                            </button>
+                            <button
+                              onClick={() => saveEdit(prompt.id)}
+                              className="flex items-center gap-2 px-4 py-1.5 bg-[#f0f0f0] text-[#0a0a0a] rounded-lg text-xs font-bold shadow-md"
+                            >
+                              <Save size={14} /> Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[15px] leading-relaxed text-[#bbb] whitespace-pre-wrap break-words line-clamp-4 group-hover:text-[#ddd] transition-colors">
+                          {prompt.content}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Footer with Slider and Stats */}
+                    <div className="mt-6 pt-4 border-t border-[#222]/50 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {lineage.versions.length > 1 ? (
+                          <div
+                            className="flex items-center gap-1 bg-[#0a0a0a] rounded-lg p-1 border border-[#222]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              disabled={activeIndex === 0}
+                              onClick={() =>
+                                setLineageActiveIndices((prev) => ({
+                                  ...prev,
+                                  [lineage.rootId]: Math.max(
+                                    0,
+                                    activeIndex - 1,
+                                  ),
+                                }))
+                              }
+                              className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
+                            >
+                              <ChevronLeft size={14} />
+                            </button>
+                            <div className="flex gap-1 px-2">
+                              {lineage.versions.map((_, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`w-1 h-1 rounded-full transition-all ${
+                                    idx === activeIndex
+                                      ? "bg-[#AAA0FA] scale-125"
+                                      : "bg-[#333]"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <button
+                              disabled={
+                                activeIndex === lineage.versions.length - 1
+                              }
+                              onClick={() =>
+                                setLineageActiveIndices((prev) => ({
+                                  ...prev,
+                                  [lineage.rootId]: Math.min(
+                                    lineage.versions.length - 1,
+                                    activeIndex + 1,
+                                  ),
+                                }))
+                              }
+                              className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
+                            >
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-[10px] font-mono text-[#444] uppercase tracking-tighter">
+                            {prompt.timestamp}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {prompt.models.length > 0 && (
+                          <div className="flex items-center gap-1 text-[10px] text-[#666]">
+                            <Zap size={10} className="text-[#EEB180]" />
+                            {prompt.models.length}
+                          </div>
+                        )}
+                        {prompt.thoughts.length > 0 && (
+                          <div className="flex items-center gap-1 text-[10px] text-[#666]">
+                            <Brain size={10} className="text-[#AAA0FA]" />
+                            {prompt.thoughts.length}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    <p className="text-[15px] leading-relaxed text-[#bbb] whitespace-pre-wrap break-words line-clamp-4 group-hover:text-[#ddd] transition-colors">
-                      {prompt.content}
-                    </p>
+                  </div>
+
+                  {/* Horizontal Action Bar */}
+                  {editingId !== prompt.id && !confirmDeleteId && (
+                    <div
+                      className="absolute bottom-16 right-4 flex flex-row items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-0.5 rounded-xl shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() =>
+                          copyToClipboard(prompt.content, prompt.id)
+                        }
+                        className={`p-2 rounded-lg transition-all ${
+                          copiedId === prompt.id
+                            ? "text-[#7FD88F] bg-[#7FD88F]/10"
+                            : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
+                        }`}
+                        title="Copy"
+                      >
+                        {copiedId === prompt.id ? (
+                          <Check size={16} />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => startEditing(prompt)}
+                        className="p-2 text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626] rounded-lg transition-all"
+                        title="Edit"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                      <button
+                        onClick={() => enhancePrompt(prompt)}
+                        disabled={isEnhancingId === prompt.id}
+                        className="p-2 text-[#888] hover:text-[#7FD88F] hover:bg-[#7FD88F]/10 rounded-lg transition-all disabled:opacity-50"
+                        title="AI Enhance"
+                      >
+                        {isEnhancingId === prompt.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={16} />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => duplicatePrompt(prompt)}
+                        className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
+                        title="Duplicate"
+                      >
+                        <CopyPlus size={16} />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(prompt.id)}
+                        className="p-2 text-[#888] hover:text-[#FF5252] hover:bg-[#FF5252]/10 rounded-lg transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   )}
-
-                  {/* Indicators for stats */}
-                  <div className="mt-4 flex items-center justify-between border-t border-[#222]/50 pt-3">
-                    <div className="flex items-center gap-4">
-                      {prompt.mode === "compare" &&
-                        prompt.models.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#888]">
-                            <Zap size={12} className="text-[#EEB180]" />
-                            {prompt.models.length} Models
-                          </div>
-                        )}
-                      {prompt.mode === "evolve" &&
-                        prompt.thoughts.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#888]">
-                            <Brain size={12} className="text-[#AAA0FA]" />
-                            {prompt.thoughts.length} Thoughts
-                          </div>
-                        )}
-                    </div>
-                    <div className="text-[10px] font-mono text-[#888] uppercase tracking-tighter">
-                      {prompt.timestamp}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Horizontal Action Bar */}
-                {editingId !== prompt.id && !confirmDeleteId && (
-                  <div
-                    className="absolute bottom-2 right-2 flex flex-row items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-[#1a1a1a] border border-[#333] p-0.5 rounded-xl shadow-2xl"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => copyToClipboard(prompt.content, prompt.id)}
-                      className={`p-2 rounded-lg transition-all ${
-                        copiedId === prompt.id
-                          ? "text-[#7FD88F] bg-[#7FD88F]/10"
-                          : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
-                      }`}
-                      title="Copy"
-                    >
-                      {copiedId === prompt.id ? (
-                        <Check size={16} />
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => startEditing(prompt)}
-                      className="p-2 text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626] rounded-lg transition-all"
-                      title="Edit"
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={() => enhancePrompt(prompt)}
-                      disabled={isEnhancingId === prompt.id}
-                      className="p-2 text-[#888] hover:text-[#7FD88F] hover:bg-[#7FD88F]/10 rounded-lg transition-all disabled:opacity-50"
-                      title="AI Enhance"
-                    >
-                      {isEnhancingId === prompt.id ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={16} />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => duplicatePrompt(prompt)}
-                      className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
-                      title="Duplicate"
-                    >
-                      <CopyPlus size={16} />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(prompt.id)}
-                      className="p-2 text-[#888] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           )}
         </div>
       </main>
@@ -1017,12 +1184,11 @@ const App = () => {
                                 selectedPrompt.id,
                               )
                             }
-                             className={`p-2 rounded-lg transition-all ${
-                               copiedId === selectedPrompt.id
-                                 ? "text-[#7FD88F] bg-[#7FD88F]/10"
-                                 : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
-                             }`}
-
+                            className={`p-2 rounded-lg transition-all ${
+                              copiedId === selectedPrompt.id
+                                ? "text-[#7FD88F] bg-[#7FD88F]/10"
+                                : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
+                            }`}
                             title="Copy"
                           >
                             {copiedId === selectedPrompt.id ? (
@@ -1058,7 +1224,9 @@ const App = () => {
                             <CopyPlus size={16} />
                           </button>
                           <button
-                            onClick={() => setConfirmDeleteId(selectedPrompt.id)}
+                            onClick={() =>
+                              setConfirmDeleteId(selectedPrompt.id)
+                            }
                             className="p-2 text-[#888] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
                             title="Delete"
                           >

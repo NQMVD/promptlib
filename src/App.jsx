@@ -1451,9 +1451,9 @@ const App = () => {
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-hidden p-8">
+                <div className="flex-1 min-h-0 overflow-hidden p-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col h-full min-h-0">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-6 h-6 rounded-lg bg-[#333] flex items-center justify-center">
                           <MessageSquare size={12} className="text-[#888]" />
@@ -1465,14 +1465,14 @@ const App = () => {
                           {basePrompt.timestamp}
                         </span>
                       </div>
-                      <div className="flex-1 bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 overflow-y-auto custom-scrollbar">
+                      <div className="flex-1 min-h-0 bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 overflow-y-auto custom-scrollbar">
                         <p className="text-[15px] leading-relaxed text-[#999] whitespace-pre-wrap">
                           {basePrompt.content}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col h-full min-h-0">
                       <div className="flex items-center gap-2 mb-4">
                         <div
                           className="w-6 h-6 rounded-lg flex items-center justify-center"

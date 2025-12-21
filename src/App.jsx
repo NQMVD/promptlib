@@ -101,27 +101,21 @@ const App = () => {
   // Keyboard shortcuts and Escape handling
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Escape handling
-      if (e.key === "Escape") {
-        if (selectedPromptId) {
-          if (
-            document.activeElement &&
-            (document.activeElement.tagName === "INPUT" ||
-              document.activeElement.tagName === "TEXTAREA")
-          ) {
-            document.activeElement.blur();
-          } else {
-            setSelectedPromptId(null);
-          }
-          return;
-        }
-      }
-
       // Global shortcuts (when not typing in an input)
       const isTyping =
         document.activeElement &&
         (document.activeElement.tagName === "INPUT" ||
           document.activeElement.tagName === "TEXTAREA");
+
+      // Escape handling - always close modal (blur first if typing)
+      if (e.key === "Escape" && selectedPromptId) {
+        e.preventDefault();
+        if (isTyping) {
+          document.activeElement.blur();
+        }
+        setSelectedPromptId(null);
+        return;
+      }
 
       if (!isTyping) {
         if (e.key === "Tab" && selectedPromptId && !isAddingModel) {

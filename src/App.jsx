@@ -44,10 +44,10 @@ const PROVIDERS = {
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
     defaultModel: "moonshotai/kimi-k2-instruct-0905",
   },
-  cerebras: {
-    name: "Cerebras",
-    endpoint: "https://api.cerebras.ai/v1/chat/completions",
-    defaultModel: "zai-glm-4.6",
+  inception: {
+    name: "Inception",
+    endpoint: "https://api.inceptionlabs.ai/v1/chat/completions",
+    defaultModel: "mercury",
   },
 };
 
@@ -382,7 +382,7 @@ const App = () => {
     }
     setIsEnhancingId(prompt.id);
     const systemPrompt =
-      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details. Strict Rule 3 (No Hallucinations): Do not invent specific requirements. Process: 1. Clean grammar. 2. Apply formatting. 3. Add structure. Output ONLY refined prompt text.';
+      "Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user's input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details. Strict Rule 3 (No Hallucinations): Do not invent specific requirements. Process: 1. Clean grammar. 2. Apply formatting. 3. Add structure. Output ONLY refined prompt text.";
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -733,7 +733,10 @@ const App = () => {
                         className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <AlertCircle className="text-[#FF5252] mb-3" size={28} />
+                        <AlertCircle
+                          className="text-[#FF5252] mb-3"
+                          size={28}
+                        />
                         <p className="text-sm font-medium text-[#f0f0f0] mb-5">
                           Delete this version forever?
                         </p>
@@ -845,7 +848,10 @@ const App = () => {
                               onClick={() =>
                                 setLineageActiveIndices((prev) => ({
                                   ...prev,
-                                  [lineage.rootId]: Math.max(0, activeIndex - 1),
+                                  [lineage.rootId]: Math.max(
+                                    0,
+                                    activeIndex - 1,
+                                  ),
                                 }))
                               }
                               className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
@@ -1011,7 +1017,9 @@ const App = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-[#222] mr-4">
                     <button
-                      onClick={() => updatePromptMode(selectedPrompt.id, "none")}
+                      onClick={() =>
+                        updatePromptMode(selectedPrompt.id, "none")
+                      }
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${selectedPrompt.mode === "none" ? "bg-[#222] text-white" : "text-[#555] hover:text-[#888]"}`}
                     >
                       Standard
@@ -1086,7 +1094,10 @@ const App = () => {
                           className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <AlertCircle className="text-[#FF5252] mb-3" size={28} />
+                          <AlertCircle
+                            className="text-[#FF5252] mb-3"
+                            size={28}
+                          />
                           <p className="text-sm font-medium text-[#f0f0f0] mb-5">
                             Delete this prompt forever?
                           </p>
@@ -1185,7 +1196,9 @@ const App = () => {
                             <CopyPlus size={16} />
                           </button>
                           <button
-                            onClick={() => setConfirmDeleteId(selectedPrompt.id)}
+                            onClick={() =>
+                              setConfirmDeleteId(selectedPrompt.id)
+                            }
                             className="p-2 text-[#888] hover:text-[#FF5252] hover:bg-[#FF5252]/10 rounded-lg transition-all"
                             title="Delete"
                           >
@@ -1280,7 +1293,9 @@ const App = () => {
                         <AddModelForm
                           ref={addBenchmarkBtnRef}
                           onAddingChange={setIsAddingModel}
-                          onAdd={(data) => addModelResult(selectedPromptId, data)}
+                          onAdd={(data) =>
+                            addModelResult(selectedPromptId, data)
+                          }
                         />
                       </div>
                     </div>
@@ -1337,7 +1352,9 @@ const App = () => {
                       ))}
                       <AddThoughtForm
                         ref={addThoughtBtnRef}
-                        onAdd={(text) => addEvolutionThought(selectedPrompt.id, text)}
+                        onAdd={(text) =>
+                          addEvolutionThought(selectedPrompt.id, text)
+                        }
                       />
                     </div>
                   </div>

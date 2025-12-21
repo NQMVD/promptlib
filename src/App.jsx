@@ -67,12 +67,24 @@ const App = () => {
   const [showGallery, setShowGallery] = useState(false);
   const [lineageActiveIndices, setLineageActiveIndices] = useState({});
   const [sideBySidePromptId, setSideBySidePromptId] = useState(null);
+  const [sideBySideReturnToDetail, setSideBySideReturnToDetail] = useState(false);
 
   useEffect(() => {
     if (!selectedPromptId) {
       setIsAddingModel(false);
     }
   }, [selectedPromptId]);
+
+  useEffect(() => {
+    if (selectedPromptId || sideBySidePromptId) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedPromptId, sideBySidePromptId]);
 
   const [provider, setProvider] = useState(
     localStorage.getItem("provider") || "openrouter",
@@ -105,6 +117,10 @@ const App = () => {
     const handleKeyDown = (e) => {
       // Escape handling
       if (e.key === "Escape") {
+        if (sideBySidePromptId) {
+          closeSideBySide();
+          return;
+        }
         if (selectedPromptId) {
           if (
             document.activeElement &&
@@ -161,7 +177,7 @@ const App = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPromptId, prompts, isAddingModel]);
+  }, [selectedPromptId, prompts, isAddingModel, sideBySidePromptId]);
 
   const formatDate = (date) => {
     const d = new Date(date);
@@ -487,6 +503,15 @@ const App = () => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     });
+  };
+
+  const closeSideBySide = () => {
+    const promptId = sideBySidePromptId;
+    setSideBySidePromptId(null);
+    if (sideBySideReturnToDetail && promptId) {
+      setSelectedPromptId(promptId);
+    }
+    setSideBySideReturnToDetail(false);
   };
 
   const getLineages = (allPrompts) => {
@@ -1194,6 +1219,19 @@ const App = () => {
                               <Sparkles size={16} />
                             )}
                           </button>
+                          {selectedPrompt.parentId && (
+                            <button
+                              onClick={() => {
+                                setSideBySideReturnToDetail(true);
+                                setSideBySidePromptId(selectedPrompt.id);
+                                setSelectedPromptId(null);
+                              }}
+                              className="p-2 text-[#888] hover:text-[#60A5FA] hover:bg-[#60A5FA]/10 rounded-lg transition-all"
+                              title="Compare with Base"
+                            >
+                              <ArrowLeftRight size={16} />
+                            </button>
+                          )}
                           <button
                             onClick={() => duplicatePrompt(selectedPrompt)}
                             className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
@@ -1384,7 +1422,7 @@ const App = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-black/40 backdrop-blur-xl"
-                onClick={() => setSideBySidePromptId(null)}
+                onClick={closeSideBySide}
               />
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -1406,7 +1444,7 @@ const App = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => setSideBySidePromptId(null)}
+                    onClick={closeSideBySide}
                     className="p-2 rounded-xl text-[#555] hover:text-[#f0f0f0] hover:bg-[#222] transition-all"
                   >
                     <X size={20} />

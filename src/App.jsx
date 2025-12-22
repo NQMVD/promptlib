@@ -660,7 +660,7 @@ const App = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
-                        {PROVIDERS[provider].name} API Key
+                        API Key
                       </label>
                       <input
                         type="password"

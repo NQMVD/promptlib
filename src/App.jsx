@@ -67,7 +67,8 @@ const App = () => {
   const [showGallery, setShowGallery] = useState(false);
   const [lineageActiveIndices, setLineageActiveIndices] = useState({});
   const [sideBySidePromptId, setSideBySidePromptId] = useState(null);
-  const [sideBySideReturnToDetail, setSideBySideReturnToDetail] = useState(false);
+  const [sideBySideReturnToDetail, setSideBySideReturnToDetail] =
+    useState(false);
 
   useEffect(() => {
     if (!selectedPromptId) {
@@ -77,12 +78,12 @@ const App = () => {
 
   useEffect(() => {
     if (selectedPromptId || sideBySidePromptId) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [selectedPromptId, sideBySidePromptId]);
 
@@ -95,9 +96,12 @@ const App = () => {
     return {
       openrouter:
         localStorage.getItem("openrouter_api_key") ||
-        import.meta.env.VITE_OPENROUTER_API_KEY ||
+        import.meta.env.OPENROUTER_API_KEY ||
         "",
-      groq: "",
+      groq:
+        localStorage.getItem("groq_api_key") ||
+        import.meta.env.GROQ_API_KEY ||
+        "",
       cerebras: "",
     };
   });
@@ -406,7 +410,7 @@ const App = () => {
     }
     setIsEnhancingId(prompt.id);
     const systemPrompt =
-      'Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user\'s input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details. Strict Rule 3 (No Hallucinations): Do not invent specific requirements. Process: 1. Clean grammar. 2. Apply formatting. 3. Add structure. Output ONLY refined prompt text.';
+      "Role: Meta-Prompt Engineer. Task: Rewrite and optimize the user's input into a high-performance prompt. Strict Rule 1 (No Execution): Do not perform the task described in the prompt. Your only output must be the revised version of the prompt itself. Strict Rule 2 (Fidelity): Retain all specific technical choices, constraints, and details. Strict Rule 3 (No Hallucinations): Do not invent specific requirements. Process: 1. Clean grammar. 2. Apply formatting. 3. Add structure. Output ONLY refined prompt text.";
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -766,7 +770,10 @@ const App = () => {
                         className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <AlertCircle className="text-[#FF5252] mb-3" size={28} />
+                        <AlertCircle
+                          className="text-[#FF5252] mb-3"
+                          size={28}
+                        />
                         <p className="text-sm font-medium text-[#f0f0f0] mb-5">
                           Delete this version forever?
                         </p>
@@ -878,7 +885,10 @@ const App = () => {
                               onClick={() =>
                                 setLineageActiveIndices((prev) => ({
                                   ...prev,
-                                  [lineage.rootId]: Math.max(0, activeIndex - 1),
+                                  [lineage.rootId]: Math.max(
+                                    0,
+                                    activeIndex - 1,
+                                  ),
                                 }))
                               }
                               className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
@@ -1053,7 +1063,9 @@ const App = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-[#222] mr-4">
                     <button
-                      onClick={() => updatePromptMode(selectedPrompt.id, "none")}
+                      onClick={() =>
+                        updatePromptMode(selectedPrompt.id, "none")
+                      }
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${selectedPrompt.mode === "none" ? "bg-[#222] text-white" : "text-[#555] hover:text-[#888]"}`}
                     >
                       Standard
@@ -1128,7 +1140,10 @@ const App = () => {
                           className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <AlertCircle className="text-[#FF5252] mb-3" size={28} />
+                          <AlertCircle
+                            className="text-[#FF5252] mb-3"
+                            size={28}
+                          />
                           <p className="text-sm font-medium text-[#f0f0f0] mb-5">
                             Delete this prompt forever?
                           </p>
@@ -1240,7 +1255,9 @@ const App = () => {
                             <CopyPlus size={16} />
                           </button>
                           <button
-                            onClick={() => setConfirmDeleteId(selectedPrompt.id)}
+                            onClick={() =>
+                              setConfirmDeleteId(selectedPrompt.id)
+                            }
                             className="p-2 text-[#888] hover:text-[#FF5252] hover:bg-[#FF5252]/10 rounded-lg transition-all"
                             title="Delete"
                           >
@@ -1335,7 +1352,9 @@ const App = () => {
                         <AddModelForm
                           ref={addBenchmarkBtnRef}
                           onAddingChange={setIsAddingModel}
-                          onAdd={(data) => addModelResult(selectedPromptId, data)}
+                          onAdd={(data) =>
+                            addModelResult(selectedPromptId, data)
+                          }
                         />
                       </div>
                     </div>
@@ -1392,7 +1411,9 @@ const App = () => {
                       ))}
                       <AddThoughtForm
                         ref={addThoughtBtnRef}
-                        onAdd={(text) => addEvolutionThought(selectedPrompt.id, text)}
+                        onAdd={(text) =>
+                          addEvolutionThought(selectedPrompt.id, text)
+                        }
                       />
                     </div>
                   </div>
@@ -1404,163 +1425,223 @@ const App = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {sideBySidePromptId && (() => {
-          const sideBySidePrompt = prompts.find((p) => p.id === sideBySidePromptId);
-          if (!sideBySidePrompt || !sideBySidePrompt.parentId) return null;
-          const basePrompt = prompts.find((p) => p.id === sideBySidePrompt.parentId);
-          if (!basePrompt) return null;
+        {sideBySidePromptId &&
+          (() => {
+            const sideBySidePrompt = prompts.find(
+              (p) => p.id === sideBySidePromptId,
+            );
+            if (!sideBySidePrompt || !sideBySidePrompt.parentId) return null;
+            const basePrompt = prompts.find(
+              (p) => p.id === sideBySidePrompt.parentId,
+            );
+            if (!basePrompt) return null;
 
-          return (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
-            >
+            return (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/40 backdrop-blur-xl"
-                onClick={closeSideBySide}
-              />
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                transition={{ type: "spring", duration: 0.5 }}
-                className="relative w-full max-w-6xl h-[85vh] bg-[#111] border border-[#222] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
               >
-                <div className="px-8 py-5 border-b border-[#222] flex items-center justify-between bg-[#0d0d0d]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-[#60A5FA]/10 border border-[#60A5FA]/20 flex items-center justify-center">
-                      <ArrowLeftRight size={16} className="text-[#60A5FA]" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold text-[#f0f0f0]">Side-by-Side Comparison</h2>
-                      <p className="text-[10px] text-[#555] font-mono uppercase tracking-wider">
-                        Base vs {sideBySidePrompt.relationType?.toUpperCase() || 'DERIVED'}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={closeSideBySide}
-                    className="p-2 rounded-xl text-[#555] hover:text-[#f0f0f0] hover:bg-[#222] transition-all"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="flex-1 min-h-0 overflow-hidden p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                    <div className="flex flex-col h-full min-h-0">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-6 h-6 rounded-lg bg-[#333] flex items-center justify-center">
-                          <MessageSquare size={12} className="text-[#888]" />
-                        </div>
-                        <span className="text-[11px] font-bold text-[#666] uppercase tracking-widest">
-                          Base Prompt
-                        </span>
-                        <span className="ml-auto text-[10px] font-mono text-[#444]">
-                          {basePrompt.timestamp}
-                        </span>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/40 backdrop-blur-xl"
+                  onClick={closeSideBySide}
+                />
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                  transition={{ type: "spring", duration: 0.5 }}
+                  className="relative w-full max-w-6xl h-[85vh] bg-[#111] border border-[#222] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                >
+                  <div className="px-8 py-5 border-b border-[#222] flex items-center justify-between bg-[#0d0d0d]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-[#60A5FA]/10 border border-[#60A5FA]/20 flex items-center justify-center">
+                        <ArrowLeftRight size={16} className="text-[#60A5FA]" />
                       </div>
-                      <div className="flex-1 min-h-0 bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 overflow-y-auto custom-scrollbar">
-                        <p className="text-[15px] leading-relaxed text-[#999] whitespace-pre-wrap">
-                          {basePrompt.content}
+                      <div>
+                        <h2 className="text-sm font-bold text-[#f0f0f0]">
+                          Side-by-Side Comparison
+                        </h2>
+                        <p className="text-[10px] text-[#555] font-mono uppercase tracking-wider">
+                          Base vs{" "}
+                          {sideBySidePrompt.relationType?.toUpperCase() ||
+                            "DERIVED"}
                         </p>
                       </div>
                     </div>
+                    <button
+                      onClick={closeSideBySide}
+                      className="p-2 rounded-xl text-[#555] hover:text-[#f0f0f0] hover:bg-[#222] transition-all"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
 
-                    <div className="flex flex-col h-full min-h-0">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div
-                          className="w-6 h-6 rounded-lg flex items-center justify-center"
-                          style={{
-                            backgroundColor: sideBySidePrompt.relationType === 'enhanced' ? '#7FD88F22' : '#AAA0FA22',
-                          }}
-                        >
-                          {sideBySidePrompt.relationType === 'enhanced' ? (
-                            <Sparkles size={12} className="text-[#7FD88F]" />
-                          ) : (
-                            <History size={12} className="text-[#AAA0FA]" />
-                          )}
+                  <div className="flex-1 min-h-0 overflow-hidden p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                      <div className="flex flex-col h-full min-h-0">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-6 h-6 rounded-lg bg-[#333] flex items-center justify-center">
+                            <MessageSquare size={12} className="text-[#888]" />
+                          </div>
+                          <span className="text-[11px] font-bold text-[#666] uppercase tracking-widest">
+                            Base Prompt
+                          </span>
+                          <span className="ml-auto text-[10px] font-mono text-[#444]">
+                            {basePrompt.timestamp}
+                          </span>
                         </div>
-                        <span
-                          className="text-[11px] font-bold uppercase tracking-widest"
+                        <div className="flex-1 min-h-0 bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 overflow-y-auto custom-scrollbar">
+                          <p className="text-[15px] leading-relaxed text-[#999] whitespace-pre-wrap">
+                            {basePrompt.content}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col h-full min-h-0">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div
+                            className="w-6 h-6 rounded-lg flex items-center justify-center"
+                            style={{
+                              backgroundColor:
+                                sideBySidePrompt.relationType === "enhanced"
+                                  ? "#7FD88F22"
+                                  : "#AAA0FA22",
+                            }}
+                          >
+                            {sideBySidePrompt.relationType === "enhanced" ? (
+                              <Sparkles size={12} className="text-[#7FD88F]" />
+                            ) : (
+                              <History size={12} className="text-[#AAA0FA]" />
+                            )}
+                          </div>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-widest"
+                            style={{
+                              color:
+                                sideBySidePrompt.relationType === "enhanced"
+                                  ? "#7FD88F"
+                                  : "#AAA0FA",
+                            }}
+                          >
+                            {sideBySidePrompt.relationType === "enhanced"
+                              ? "Enhanced"
+                              : "Evolved"}{" "}
+                            Prompt
+                          </span>
+                          <span className="ml-auto text-[10px] font-mono text-[#444]">
+                            {sideBySidePrompt.timestamp}
+                          </span>
+                        </div>
+                        <div
+                          className="flex-1 rounded-2xl p-6 overflow-y-auto custom-scrollbar border"
                           style={{
-                            color: sideBySidePrompt.relationType === 'enhanced' ? '#7FD88F' : '#AAA0FA',
+                            backgroundColor:
+                              sideBySidePrompt.relationType === "enhanced"
+                                ? "#7FD88F08"
+                                : "#AAA0FA08",
+                            borderColor:
+                              sideBySidePrompt.relationType === "enhanced"
+                                ? "#7FD88F22"
+                                : "#AAA0FA22",
                           }}
                         >
-                          {sideBySidePrompt.relationType === 'enhanced' ? 'Enhanced' : 'Evolved'} Prompt
-                        </span>
-                        <span className="ml-auto text-[10px] font-mono text-[#444]">
-                          {sideBySidePrompt.timestamp}
-                        </span>
+                          <p className="text-[15px] leading-relaxed text-[#ddd] whitespace-pre-wrap">
+                            {sideBySidePrompt.content}
+                          </p>
+                        </div>
                       </div>
-                      <div
-                        className="flex-1 rounded-2xl p-6 overflow-y-auto custom-scrollbar border"
+                    </div>
+                  </div>
+
+                  <div className="px-8 py-4 border-t border-[#222] bg-[#0d0d0d] flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-[10px] font-mono text-[#444] uppercase">
+                      <span>Base: {basePrompt.content.length} chars</span>
+                      <span className="text-[#333]">|</span>
+                      <span
                         style={{
-                          backgroundColor: sideBySidePrompt.relationType === 'enhanced' ? '#7FD88F08' : '#AAA0FA08',
-                          borderColor: sideBySidePrompt.relationType === 'enhanced' ? '#7FD88F22' : '#AAA0FA22',
+                          color:
+                            sideBySidePrompt.relationType === "enhanced"
+                              ? "#7FD88F"
+                              : "#AAA0FA",
                         }}
                       >
-                        <p className="text-[15px] leading-relaxed text-[#ddd] whitespace-pre-wrap">
-                          {sideBySidePrompt.content}
-                        </p>
-                      </div>
+                        {sideBySidePrompt.relationType === "enhanced"
+                          ? "Enhanced"
+                          : "Evolved"}
+                        : {sideBySidePrompt.content.length} chars
+                      </span>
+                      <span className="text-[#333]">|</span>
+                      <span className="text-[#60A5FA]">
+                        {sideBySidePrompt.content.length >
+                        basePrompt.content.length
+                          ? "+"
+                          : ""}
+                        {Math.round(
+                          ((sideBySidePrompt.content.length -
+                            basePrompt.content.length) /
+                            basePrompt.content.length) *
+                            100,
+                        )}
+                        % change
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            basePrompt.content,
+                            `base-${basePrompt.id}`,
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                          copiedId === `base-${basePrompt.id}`
+                            ? "bg-[#7FD88F]/20 text-[#7FD88F]"
+                            : "text-[#555] hover:text-[#888] hover:bg-[#222]"
+                        }`}
+                      >
+                        {copiedId === `base-${basePrompt.id}` ? (
+                          <Check size={12} />
+                        ) : (
+                          <Copy size={12} />
+                        )}
+                        Copy Base
+                      </button>
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            sideBySidePrompt.content,
+                            sideBySidePrompt.id,
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                          copiedId === sideBySidePrompt.id
+                            ? "bg-[#7FD88F]/20 text-[#7FD88F]"
+                            : sideBySidePrompt.relationType === "enhanced"
+                              ? "text-[#7FD88F] hover:bg-[#7FD88F]/10"
+                              : "text-[#AAA0FA] hover:bg-[#AAA0FA]/10"
+                        }`}
+                      >
+                        {copiedId === sideBySidePrompt.id ? (
+                          <Check size={12} />
+                        ) : (
+                          <Copy size={12} />
+                        )}
+                        Copy{" "}
+                        {sideBySidePrompt.relationType === "enhanced"
+                          ? "Enhanced"
+                          : "Evolved"}
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                <div className="px-8 py-4 border-t border-[#222] bg-[#0d0d0d] flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-[10px] font-mono text-[#444] uppercase">
-                    <span>Base: {basePrompt.content.length} chars</span>
-                    <span className="text-[#333]">|</span>
-                    <span
-                      style={{
-                        color: sideBySidePrompt.relationType === 'enhanced' ? '#7FD88F' : '#AAA0FA',
-                      }}
-                    >
-                      {sideBySidePrompt.relationType === 'enhanced' ? 'Enhanced' : 'Evolved'}: {sideBySidePrompt.content.length} chars
-                    </span>
-                    <span className="text-[#333]">|</span>
-                    <span className="text-[#60A5FA]">
-                      {sideBySidePrompt.content.length > basePrompt.content.length ? '+' : ''}
-                      {Math.round(((sideBySidePrompt.content.length - basePrompt.content.length) / basePrompt.content.length) * 100)}% change
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => copyToClipboard(basePrompt.content, `base-${basePrompt.id}`)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-                        copiedId === `base-${basePrompt.id}`
-                          ? 'bg-[#7FD88F]/20 text-[#7FD88F]'
-                          : 'text-[#555] hover:text-[#888] hover:bg-[#222]'
-                      }`}
-                    >
-                      {copiedId === `base-${basePrompt.id}` ? <Check size={12} /> : <Copy size={12} />}
-                      Copy Base
-                    </button>
-                    <button
-                      onClick={() => copyToClipboard(sideBySidePrompt.content, sideBySidePrompt.id)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-                        copiedId === sideBySidePrompt.id
-                          ? 'bg-[#7FD88F]/20 text-[#7FD88F]'
-                          : sideBySidePrompt.relationType === 'enhanced'
-                            ? 'text-[#7FD88F] hover:bg-[#7FD88F]/10'
-                            : 'text-[#AAA0FA] hover:bg-[#AAA0FA]/10'
-                      }`}
-                    >
-                      {copiedId === sideBySidePrompt.id ? <Check size={12} /> : <Copy size={12} />}
-                      Copy {sideBySidePrompt.relationType === 'enhanced' ? 'Enhanced' : 'Evolved'}
-                    </button>
-                  </div>
-                </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          );
-        })()}
+            );
+          })()}
       </AnimatePresence>
 
       <footer className="max-w-4xl mx-auto px-6 py-12 text-center opacity-20">

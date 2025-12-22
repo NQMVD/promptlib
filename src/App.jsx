@@ -30,6 +30,7 @@ import {
   Layout,
   Layers,
   MoreVertical,
+  ArrowLeftRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -65,12 +66,26 @@ const App = () => {
   const [isAddingModel, setIsAddingModel] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [lineageActiveIndices, setLineageActiveIndices] = useState({});
+  const [sideBySidePromptId, setSideBySidePromptId] = useState(null);
+  const [sideBySideReturnToDetail, setSideBySideReturnToDetail] =
+    useState(false);
 
   useEffect(() => {
     if (!selectedPromptId) {
       setIsAddingModel(false);
     }
   }, [selectedPromptId]);
+
+  useEffect(() => {
+    if (selectedPromptId || sideBySidePromptId) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedPromptId, sideBySidePromptId]);
 
   const [provider, setProvider] = useState(
     localStorage.getItem("provider") || "openrouter",
@@ -81,9 +96,12 @@ const App = () => {
     return {
       openrouter:
         localStorage.getItem("openrouter_api_key") ||
-        import.meta.env.VITE_OPENROUTER_API_KEY ||
+        import.meta.env.OPENROUTER_API_KEY ||
         "",
-      groq: "",
+      groq:
+        localStorage.getItem("groq_api_key") ||
+        import.meta.env.GROQ_API_KEY ||
+        "",
       cerebras: "",
     };
   });
@@ -101,6 +119,26 @@ const App = () => {
   // Keyboard shortcuts and Escape handling
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Escape handling
+      if (e.key === "Escape") {
+        if (sideBySidePromptId) {
+          closeSideBySide();
+          return;
+        }
+        if (selectedPromptId) {
+          if (
+            document.activeElement &&
+            (document.activeElement.tagName === "INPUT" ||
+              document.activeElement.tagName === "TEXTAREA")
+          ) {
+            document.activeElement.blur();
+          } else {
+            setSelectedPromptId(null);
+          }
+          return;
+        }
+      }
+
       // Global shortcuts (when not typing in an input)
       const isTyping =
         document.activeElement &&
@@ -153,7 +191,7 @@ const App = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPromptId, prompts, isAddingModel]);
+  }, [selectedPromptId, prompts, isAddingModel, sideBySidePromptId]);
 
   const formatDate = (date) => {
     const d = new Date(date);
@@ -481,6 +519,15 @@ const App = () => {
     });
   };
 
+  const closeSideBySide = () => {
+    const promptId = sideBySidePromptId;
+    setSideBySidePromptId(null);
+    if (sideBySideReturnToDetail && promptId) {
+      setSelectedPromptId(promptId);
+    }
+    setSideBySideReturnToDetail(false);
+  };
+
   const getLineages = (allPrompts) => {
     const promptMap = new Map(allPrompts.map((p) => [p.id, p]));
     const roots = allPrompts.filter(
@@ -627,7 +674,7 @@ const App = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
-                        {PROVIDERS[provider].name} API Key
+                        API Key
                       </label>
                       <input
                         type="password"
@@ -956,6 +1003,15 @@ const App = () => {
                           <Sparkles size={16} />
                         )}
                       </button>
+                      {prompt.parentId && (
+                        <button
+                          onClick={() => setSideBySidePromptId(prompt.id)}
+                          className="p-2 text-[#888] hover:text-[#60A5FA] hover:bg-[#60A5FA]/10 rounded-lg transition-all"
+                          title="Compare with Base"
+                        >
+                          <ArrowLeftRight size={16} />
+                        </button>
+                      )}
                       <button
                         onClick={() => duplicatePrompt(prompt)}
                         className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
@@ -1188,6 +1244,19 @@ const App = () => {
                               <Sparkles size={16} />
                             )}
                           </button>
+                          {selectedPrompt.parentId && (
+                            <button
+                              onClick={() => {
+                                setSideBySideReturnToDetail(true);
+                                setSideBySidePromptId(selectedPrompt.id);
+                                setSelectedPromptId(null);
+                              }}
+                              className="p-2 text-[#888] hover:text-[#60A5FA] hover:bg-[#60A5FA]/10 rounded-lg transition-all"
+                              title="Compare with Base"
+                            >
+                              <ArrowLeftRight size={16} />
+                            </button>
+                          )}
                           <button
                             onClick={() => duplicatePrompt(selectedPrompt)}
                             className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
@@ -1363,6 +1432,226 @@ const App = () => {
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {sideBySidePromptId &&
+          (() => {
+            const sideBySidePrompt = prompts.find(
+              (p) => p.id === sideBySidePromptId,
+            );
+            if (!sideBySidePrompt || !sideBySidePrompt.parentId) return null;
+            const basePrompt = prompts.find(
+              (p) => p.id === sideBySidePrompt.parentId,
+            );
+            if (!basePrompt) return null;
+
+            return (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/40 backdrop-blur-xl"
+                  onClick={closeSideBySide}
+                />
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                  transition={{ type: "spring", duration: 0.5 }}
+                  className="relative w-full max-w-6xl h-[85vh] bg-[#111] border border-[#222] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                >
+                  <div className="px-8 py-5 border-b border-[#222] flex items-center justify-between bg-[#0d0d0d]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-[#60A5FA]/10 border border-[#60A5FA]/20 flex items-center justify-center">
+                        <ArrowLeftRight size={16} className="text-[#60A5FA]" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold text-[#f0f0f0]">
+                          Side-by-Side Comparison
+                        </h2>
+                        <p className="text-[10px] text-[#555] font-mono uppercase tracking-wider">
+                          Base vs{" "}
+                          {sideBySidePrompt.relationType?.toUpperCase() ||
+                            "DERIVED"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={closeSideBySide}
+                      className="p-2 rounded-xl text-[#555] hover:text-[#f0f0f0] hover:bg-[#222] transition-all"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 min-h-0 overflow-hidden p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                      <div className="flex flex-col h-full min-h-0">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-6 h-6 rounded-lg bg-[#333] flex items-center justify-center">
+                            <MessageSquare size={12} className="text-[#888]" />
+                          </div>
+                          <span className="text-[11px] font-bold text-[#666] uppercase tracking-widest">
+                            Base Prompt
+                          </span>
+                          <span className="ml-auto text-[10px] font-mono text-[#444]">
+                            {basePrompt.timestamp}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-h-0 bg-[#0d0d0d] border border-[#222] rounded-2xl p-6 overflow-y-auto custom-scrollbar">
+                          <p className="text-[15px] leading-relaxed text-[#999] whitespace-pre-wrap">
+                            {basePrompt.content}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col h-full min-h-0">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div
+                            className="w-6 h-6 rounded-lg flex items-center justify-center"
+                            style={{
+                              backgroundColor:
+                                sideBySidePrompt.relationType === "enhanced"
+                                  ? "#7FD88F22"
+                                  : "#AAA0FA22",
+                            }}
+                          >
+                            {sideBySidePrompt.relationType === "enhanced" ? (
+                              <Sparkles size={12} className="text-[#7FD88F]" />
+                            ) : (
+                              <History size={12} className="text-[#AAA0FA]" />
+                            )}
+                          </div>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-widest"
+                            style={{
+                              color:
+                                sideBySidePrompt.relationType === "enhanced"
+                                  ? "#7FD88F"
+                                  : "#AAA0FA",
+                            }}
+                          >
+                            {sideBySidePrompt.relationType === "enhanced"
+                              ? "Enhanced"
+                              : "Evolved"}{" "}
+                            Prompt
+                          </span>
+                          <span className="ml-auto text-[10px] font-mono text-[#444]">
+                            {sideBySidePrompt.timestamp}
+                          </span>
+                        </div>
+                        <div
+                          className="flex-1 rounded-2xl p-6 overflow-y-auto custom-scrollbar border"
+                          style={{
+                            backgroundColor:
+                              sideBySidePrompt.relationType === "enhanced"
+                                ? "#7FD88F08"
+                                : "#AAA0FA08",
+                            borderColor:
+                              sideBySidePrompt.relationType === "enhanced"
+                                ? "#7FD88F22"
+                                : "#AAA0FA22",
+                          }}
+                        >
+                          <p className="text-[15px] leading-relaxed text-[#ddd] whitespace-pre-wrap">
+                            {sideBySidePrompt.content}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-8 py-4 border-t border-[#222] bg-[#0d0d0d] flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-[10px] font-mono text-[#444] uppercase">
+                      <span>Base: {basePrompt.content.length} chars</span>
+                      <span className="text-[#333]">|</span>
+                      <span
+                        style={{
+                          color:
+                            sideBySidePrompt.relationType === "enhanced"
+                              ? "#7FD88F"
+                              : "#AAA0FA",
+                        }}
+                      >
+                        {sideBySidePrompt.relationType === "enhanced"
+                          ? "Enhanced"
+                          : "Evolved"}
+                        : {sideBySidePrompt.content.length} chars
+                      </span>
+                      <span className="text-[#333]">|</span>
+                      <span className="text-[#60A5FA]">
+                        {sideBySidePrompt.content.length >
+                        basePrompt.content.length
+                          ? "+"
+                          : ""}
+                        {Math.round(
+                          ((sideBySidePrompt.content.length -
+                            basePrompt.content.length) /
+                            basePrompt.content.length) *
+                            100,
+                        )}
+                        % change
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            basePrompt.content,
+                            `base-${basePrompt.id}`,
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                          copiedId === `base-${basePrompt.id}`
+                            ? "bg-[#7FD88F]/20 text-[#7FD88F]"
+                            : "text-[#555] hover:text-[#888] hover:bg-[#222]"
+                        }`}
+                      >
+                        {copiedId === `base-${basePrompt.id}` ? (
+                          <Check size={12} />
+                        ) : (
+                          <Copy size={12} />
+                        )}
+                        Copy Base
+                      </button>
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            sideBySidePrompt.content,
+                            sideBySidePrompt.id,
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                          copiedId === sideBySidePrompt.id
+                            ? "bg-[#7FD88F]/20 text-[#7FD88F]"
+                            : sideBySidePrompt.relationType === "enhanced"
+                              ? "text-[#7FD88F] hover:bg-[#7FD88F]/10"
+                              : "text-[#AAA0FA] hover:bg-[#AAA0FA]/10"
+                        }`}
+                      >
+                        {copiedId === sideBySidePrompt.id ? (
+                          <Check size={12} />
+                        ) : (
+                          <Copy size={12} />
+                        )}
+                        Copy{" "}
+                        {sideBySidePrompt.relationType === "enhanced"
+                          ? "Enhanced"
+                          : "Evolved"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            );
+          })()}
       </AnimatePresence>
 
       <footer className="max-w-4xl mx-auto px-6 py-12 text-center opacity-20">

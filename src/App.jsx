@@ -45,10 +45,10 @@ const PROVIDERS = {
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
     defaultModel: "moonshotai/kimi-k2-instruct-0905",
   },
-  cerebras: {
-    name: "Cerebras",
-    endpoint: "https://api.cerebras.ai/v1/chat/completions",
-    defaultModel: "zai-glm-4.6",
+  inception: {
+    name: "Inception",
+    endpoint: "https://api.inceptionlabs.ai/v1/chat/completions",
+    defaultModel: "mercury",
   },
 };
 
@@ -144,6 +144,16 @@ const App = () => {
         document.activeElement &&
         (document.activeElement.tagName === "INPUT" ||
           document.activeElement.tagName === "TEXTAREA");
+
+      // Escape handling - always close modal (blur first if typing)
+      if (e.key === "Escape" && selectedPromptId) {
+        e.preventDefault();
+        if (isTyping) {
+          document.activeElement.blur();
+        }
+        setSelectedPromptId(null);
+        return;
+      }
 
       if (!isTyping) {
         if (e.key === "Tab" && selectedPromptId && !isAddingModel) {

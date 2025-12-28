@@ -1,0 +1,7 @@
+TODOS
+	✓ add inception provider with mercury as model
+	✓ add z.ai as provider
+	load/save from/to disk for myself
+	create some sort of additions or questions feature where the prompt will be sent to a model that then should generate suggestions on additions or create questions to the user to provoke further thinking
+	help button that opens a modal which shows a help page to help newbies how to prompt and how this tool can help with that
+

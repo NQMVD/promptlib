@@ -99,9 +99,10 @@ const MainView = ({
             <div className="flex flex-col h-full items-center justify-center p-8 relative">
                 <div className="w-full max-w-3xl h-full flex flex-col relative">
                     <PromptEditor
-                        prompt={prompt}
-                        onUpdate={onUpdate}
-                        readOnly={false}
+                        key={prompt.id}
+                        content={prompt.content}
+                        onChange={(val) => onUpdate(prompt.id, val)}
+                        onSave={() => console.log("Saved")}
                     />
                 </div>
             </div>

@@ -14,6 +14,8 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
 
     // 1. Group prompts by lineage
     const groupedPrompts = useMemo(() => {
+        if (!prompts || prompts.length === 0) return [];
+
         // Helper to find root ID
         const findRoot = (id, all) => {
             let current = all.find(p => p.id === id);
@@ -21,6 +23,7 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
             while (current && current.parentId && !visited.has(current.id)) {
                 visited.add(current.id);
                 const parent = all.find(p => p.id === current.parentId);
+                // If parent doesn't exist, current is effectively root relative to known universe
                 if (!parent) break;
                 current = parent;
             }
@@ -38,17 +41,20 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
             groups[rootId].push(p);
         });
 
-        // Sort stacks by the timestamp of the LATEST prompt in the stack
-        return Object.values(groups).map(stack => {
-            // Sort variants in stack by date desc (newest first)
-            stack.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            return stack;
-        }).sort((stackA, stackB) => {
-            const latestA = stackA[0];
-            const latestB = stackB[0];
-            return new Date(latestB.timestamp) - new Date(latestA.timestamp);
-        });
-    }, [prompts]);
+        // Filter out empty groups and sort stacks
+        return Object.values(groups)
+            .filter(stack => stack.length > 0)
+            .map(stack => {
+                // Sort variants in stack by date desc (newest first)
+                return stack.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            })
+            .sort((stackA, stackB) => {
+                // Sort stacks by the newest item in them
+                const latestA = stackA[0];
+                const latestB = stackB[0];
+                return new Date(latestB.timestamp) - new Date(latestA.timestamp);
+            });
+    }, [prompts]); // Re-compute when prompts change
 
     const handleContextMenu = (e, stack) => {
         e.preventDefault();
@@ -92,34 +98,35 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                 ) : (
                     groupedPrompts.map((stack) => {
                         const topPrompt = stack[0]; // The newest one
+                        // A stack is selected if ANY of its items are selected
                         const isStackSelected = stack.some(p => p.id === selectedId);
                         const variantCount = stack.length;
 
                         return (
                             <div
                                 key={topPrompt.id}
-                                className="relative group perspective"
+                                className="relative group perspective select-none"
                                 onContextMenu={(e) => handleContextMenu(e, stack)}
                             >
                                 {/* Stack Depth Effect Layers */}
                                 {variantCount > 1 && (
                                     <>
-                                        <div className="absolute top-1 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.96] translate-y-1 opacity-60 z-0" />
+                                        <div className="absolute top-1 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.96] translate-y-1 opacity-60 pointer-events-none" />
                                         {variantCount > 2 && (
-                                            <div className="absolute top-2 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.92] translate-y-2 opacity-30 -z-10" />
+                                            <div className="absolute top-2 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.92] translate-y-2 opacity-30 pointer-events-none" />
                                         )}
                                     </>
                                 )}
 
                                 {/* Main Card */}
-                                <button
+                                <div
                                     onClick={() => onSelect(topPrompt.id)}
-                                    className={`relative w-full text-left p-3 rounded-xl border transition-all duration-200 z-10 ${isStackSelected
+                                    className={`relative w-full text-left p-3 rounded-xl border transition-all duration-200 cursor-pointer ${isStackSelected
                                             ? "bg-[var(--bg-surface)] border-[var(--border-strong)] shadow-xl translate-x-1"
                                             : "bg-[var(--bg-primary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:shadow-md"
                                         }`}
                                 >
-                                    <div className="flex justify-between items-start mb-2">
+                                    <div className="flex justify-between items-start mb-2 pointer-events-none">
                                         <div className="flex items-center gap-1.5">
                                             {topPrompt.mode === "evolved" || topPrompt.parentId ? (
                                                 <div className={`p-1 rounded-md ${topPrompt.relationType === 'enhanced'
@@ -142,11 +149,10 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                                         )}
                                     </div>
 
-                                    <p className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 leading-snug">
+                                    <p className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 leading-snug pointer-events-none">
                                         {topPrompt.content || <span className="italic opacity-50">Empty prompt</span>}
                                     </p>
-
-                                </button>
+                                </div>
                             </div>
                         );
                     })
@@ -160,7 +166,6 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                         className="fixed inset-0 z-50 pointer-events-none"
                         style={{ top: 0, left: 0 }}
                     >
-                        {/* Visual backdrop is handled by event listener for click-away */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, x: -10 }}
                             animate={{ opacity: 1, scale: 1, x: 0 }}

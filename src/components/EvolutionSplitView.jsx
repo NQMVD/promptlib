@@ -42,9 +42,10 @@ const EvolutionSplitView = ({
                 </div>
                 <div className="flex-1 overflow-hidden relative">
                     <PromptEditor
-                        prompt={prompt}
-                        onUpdate={onUpdate}
-                        readOnly={true} // Usually looking at base to evolve from, but could be editable
+                        key={prompt.id}
+                        content={prompt.content}
+                        onChange={() => { }} // Read-only
+                        onSave={() => { }}
                     />
                 </div>
             </div>

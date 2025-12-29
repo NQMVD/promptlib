@@ -1,38 +1,26 @@
-import { createClient } from "@/lib/supabase/server"
+import { storage } from "@/lib/storage"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase.from("prompts").select("*").order("created_at", { ascending: false })
-
-  if (error) {
+  try {
+    const data = await storage.getPrompts()
+    return NextResponse.json(data)
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
-  return NextResponse.json(data)
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const body = await request.json()
-
-  const { data, error } = await supabase
-    .from("prompts")
-    .insert([
-      {
-        title: body.title,
-        content: body.content,
-        parent_id: body.parent_id || null,
-        variant_type: body.variant_type || "base",
-      },
-    ])
-    .select()
-    .single()
-
-  if (error) {
+  try {
+    const body = await request.json()
+    const data = await storage.createPrompt({
+      title: body.title,
+      content: body.content,
+      parent_id: body.parent_id || null,
+      variant_type: body.variant_type || "base",
+    })
+    return NextResponse.json(data)
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
-  return NextResponse.json(data)
 }

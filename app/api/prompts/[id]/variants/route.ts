@@ -1,19 +1,12 @@
-import { createClient } from "@/lib/supabase/server"
+import { storage } from "@/lib/storage"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient()
-  const { id } = await params
-
-  const { data, error } = await supabase
-    .from("prompts")
-    .select("*")
-    .eq("parent_id", id)
-    .order("created_at", { ascending: false })
-
-  if (error) {
+  try {
+    const { id } = await params
+    const data = await storage.getVariants(id)
+    return NextResponse.json(data)
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
-  return NextResponse.json(data)
 }

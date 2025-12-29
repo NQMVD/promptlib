@@ -568,59 +568,73 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#d1d1d1] font-sans selection:bg-[#3d3d3d]">
-      <header className="border-b border-[#222] bg-[#0d0d0d]/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#EEB180] to-[#CE9160] flex items-center justify-center shadow-lg shadow-orange-500/10">
-              <Archive size={18} className="text-white" />
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-secondary)] font-sans">
+      {/* Header - Glass effect with gradient accents */}
+      <header className="glass-strong sticky top-0 z-40 border-b border-[var(--border-subtle)]">
+        <div className="max-w-5xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-orange)] to-[var(--accent-purple)] rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent-orange)] to-[#CE9160] flex items-center justify-center shadow-lg">
+                  <Archive size={20} className="text-white" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                  Prompt Library
+                </h1>
+                <p className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-widest">
+                  {prompts.length} prompts
+                </p>
+              </div>
             </div>
-            <h1 className="text-lg font-medium tracking-tight text-[#f0f0f0]">
-              Prompt Library
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <button
-              onClick={exportLibrary}
-              className="p-2 rounded-lg text-[#666] hover:text-[#f0f0f0] hover:bg-[#161616] transition-all"
-              title="Export Library"
-            >
-              <Download size={18} />
-            </button>
-            <label
-              className="p-2 rounded-lg text-[#666] hover:text-[#f0f0f0] hover:bg-[#161616] transition-all cursor-pointer"
-              title="Import Library"
-            >
-              <Upload size={18} />
-              <input
-                type="file"
-                className="hidden"
-                accept=".txt"
-                onChange={importLibrary}
-              />
-            </label>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-lg transition-all ${showSettings ? "bg-[#222] text-[#f0f0f0]" : "text-[#666] hover:text-[#f0f0f0] hover:bg-[#161616]"}`}
-              title="Settings"
-            >
-              <Settings size={18} />
-            </button>
-            <button
-              onClick={() => setShowGallery(true)}
-              className="p-2 rounded-lg text-[#666] hover:text-[#f0f0f0] hover:bg-[#161616] transition-all"
-              title="View UI Variants"
-            >
-              <Layout size={18} />
-            </button>
-            <div className="hidden sm:block text-xs text-[#666] font-mono uppercase tracking-widest bg-[#161616] px-3 py-1.5 rounded-full border border-[#222]">
-              {prompts.length} Items
+
+            {/* Action Toolbar */}
+            <div className="flex items-center gap-1">
+              <div className="flex items-center bg-[var(--bg-surface)] rounded-xl p-1 border border-[var(--border-subtle)]">
+                <button
+                  onClick={exportLibrary}
+                  className="btn-ghost p-2"
+                  title="Export Library"
+                >
+                  <Download size={18} />
+                </button>
+                <label
+                  className="btn-ghost p-2 cursor-pointer"
+                  title="Import Library"
+                >
+                  <Upload size={18} />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".txt"
+                    onChange={importLibrary}
+                  />
+                </label>
+                <div className="w-px h-5 bg-[var(--border-subtle)] mx-1" />
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className={`btn-ghost p-2 ${showSettings ? "bg-[var(--bg-elevated)] text-[var(--text-primary)]" : ""}`}
+                  title="Settings"
+                >
+                  <Settings size={18} />
+                </button>
+                <button
+                  onClick={() => setShowGallery(true)}
+                  className="btn-ghost p-2"
+                  title="View UI Variants"
+                >
+                  <Layout size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-6 py-10">
         {/* Settings Panel */}
         <AnimatePresence>
           {showSettings && (
@@ -628,62 +642,59 @@ const App = () => {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden mb-8"
+              className="overflow-hidden mb-10"
             >
-              <div className="p-6 bg-[#111] border border-[#222] rounded-xl">
+              <div className="card-base p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-sm font-medium text-[#f0f0f0]">
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">
                     API Configuration
                   </h2>
                   <button
                     onClick={() => setShowSettings(false)}
-                    className="text-[#555] hover:text-[#888]"
+                    className="btn-ghost p-1.5"
                   >
                     <X size={16} />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
-                        Provider
-                      </label>
-                      <select
-                        value={provider}
-                        onChange={(e) => handleProviderChange(e.target.value)}
-                        className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors appearance-none cursor-pointer"
-                      >
-                        {Object.entries(PROVIDERS).map(([id, p]) => (
-                          <option key={id} value={id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
-                        Model ID
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
-                        value={modelId}
-                        onChange={(e) => setModelId(e.target.value)}
-                      />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-[11px] text-[var(--text-muted)] font-mono uppercase tracking-wider">
+                      Provider
+                    </label>
+                    <select
+                      value={provider}
+                      onChange={(e) => handleProviderChange(e.target.value)}
+                      className="input-base w-full appearance-none cursor-pointer"
+                    >
+                      {Object.entries(PROVIDERS).map(([id, p]) => (
+                        <option key={id} value={id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[11px] text-[#555] font-mono uppercase mb-2">
-                        API Key
-                      </label>
-                      <input
-                        type="password"
-                        className="w-full bg-[#0a0a0a] border border-[#222] rounded-lg px-4 py-2 text-sm focus:border-[#444] outline-none transition-colors"
-                        value={apiKeys[provider] || ""}
-                        onChange={(e) => updateApiKey(e.target.value)}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="block text-[11px] text-[var(--text-muted)] font-mono uppercase tracking-wider">
+                      Model ID
+                    </label>
+                    <input
+                      type="text"
+                      className="input-base w-full"
+                      value={modelId}
+                      onChange={(e) => setModelId(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[11px] text-[var(--text-muted)] font-mono uppercase tracking-wider">
+                      API Key
+                    </label>
+                    <input
+                      type="password"
+                      className="input-base w-full"
+                      value={apiKeys[provider] || ""}
+                      onChange={(e) => updateApiKey(e.target.value)}
+                      placeholder="••••••••••••"
+                    />
                   </div>
                 </div>
               </div>
@@ -691,60 +702,72 @@ const App = () => {
           )}
         </AnimatePresence>
 
-        {/* Input Area */}
-        <div className="mb-10 group">
-          <div className="relative bg-[#161616] border border-[#262626] rounded-xl transition-all duration-300 focus-within:border-[#444] shadow-xl">
-            <textarea
-              ref={textareaRef}
-              className="w-full bg-transparent border-none focus:ring-0 p-5 min-h-[120px] max-h-[70vh] text-[15px] leading-relaxed placeholder-[#444] resize-none focus:outline-none overflow-y-auto scrollbar-hide"
-              placeholder="Paste or type a prompt here..."
-              value={newPrompt}
-              onChange={(e) => setNewPrompt(e.target.value)}
-            />
-            <div className="flex items-center justify-between px-5 py-3 border-t border-[#262626] bg-[#1a1a1a]/50">
-              <span className="text-[10px] text-[#555] font-mono tracking-widest">
-                CMD + ENTER TO SAVE
-              </span>
-              <button
-                onClick={() => addPrompt()}
-                disabled={!newPrompt.trim()}
-                className="flex items-center gap-2 px-5 py-2 bg-[#f0f0f0] text-[#0a0a0a] rounded-lg text-sm font-medium hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
-              >
-                <Plus size={16} /> Save Prompt
-              </button>
+        {/* Input Area - Floating card with gradient border on focus */}
+        <div className="mb-12">
+          <div className="relative group">
+            {/* Glow effect behind */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-[var(--accent-purple)] via-[var(--accent-orange)] to-[var(--accent-purple)] rounded-2xl opacity-0 group-focus-within:opacity-20 blur-xl transition-all duration-500" />
+
+            <div className="relative card-base card-interactive overflow-hidden">
+              <textarea
+                ref={textareaRef}
+                className="w-full bg-transparent border-none p-6 min-h-[140px] max-h-[60vh] text-base leading-relaxed placeholder-[var(--text-muted)] resize-none focus:outline-none overflow-y-auto scrollbar-hide text-[var(--text-primary)]"
+                placeholder="Paste or type your prompt here..."
+                value={newPrompt}
+                onChange={(e) => setNewPrompt(e.target.value)}
+              />
+              <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono tracking-widest uppercase">
+                    ⌘ + Enter to Save
+                  </span>
+                </div>
+                <button
+                  onClick={() => addPrompt()}
+                  disabled={!newPrompt.trim()}
+                  className="btn-primary flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  <Plus size={16} /> Save Prompt
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Search */}
         {prompts.length > 0 && (
-          <div className="relative mb-8">
+          <div className="relative mb-10 max-w-md">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
               size={16}
             />
             <input
               ref={searchInputRef}
               type="text"
               placeholder="Search library..."
-              className="w-full bg-[#111] border border-[#222] rounded-xl pl-12 pr-4 py-3 text-sm focus:border-[#444] focus:ring-0 transition-all focus:outline-none shadow-sm"
+              className="input-base w-full pl-11"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         )}
 
-        {/* List Section */}
-        <div className="grid grid-cols-1 gap-6">
+        {/* Prompt Grid */}
+        <div className="space-y-6">
           {filteredPrompts.length === 0 ? (
-            <div className="py-20 text-center border border-dashed border-[#222] rounded-3xl bg-[#0d0d0d]">
-              <div className="w-12 h-12 rounded-full bg-[#161616] flex items-center justify-center mx-auto mb-4 border border-[#222]">
-                <Archive size={20} className="text-[#333]" />
+            <div className="py-24 text-center border border-dashed border-[var(--border-default)] rounded-2xl bg-[var(--bg-secondary)]">
+              <div className="w-14 h-14 rounded-2xl bg-[var(--bg-surface)] flex items-center justify-center mx-auto mb-5 border border-[var(--border-subtle)]">
+                <Archive size={24} className="text-[var(--text-muted)]" />
               </div>
-              <p className="text-[#555] text-sm italic font-medium">
+              <p className="text-[var(--text-tertiary)] text-sm font-medium mb-2">
                 {searchQuery
-                  ? "No results found for your search."
-                  : "Your archive is empty. Start by saving a prompt."}
+                  ? "No results found"
+                  : "Your library is empty"}
+              </p>
+              <p className="text-[var(--text-muted)] text-xs">
+                {searchQuery
+                  ? "Try a different search term"
+                  : "Start by saving your first prompt above"}
               </p>
             </div>
           ) : (
@@ -763,100 +786,83 @@ const App = () => {
                   key={lineage.rootId}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`group relative bg-[#111] border rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden shadow-md hover:shadow-xl ${editingId === prompt.id
-                      ? "border-[#444] bg-[#1a1a1a]"
-                      : "border-[#222] hover:border-[#333]"
+                  className={`group relative card-base card-interactive cursor-pointer ${editingId === prompt.id
+                    ? "border-[var(--border-strong)] bg-[var(--bg-surface)]"
+                    : ""
                     }`}
                   onClick={() => {
                     if (editingId !== prompt.id) setSelectedPromptId(prompt.id);
                   }}
                 >
+                  {/* Delete Confirmation Overlay */}
                   <AnimatePresence>
                     {confirmDeleteId === prompt.id && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-20 bg-[#0a0a0a]/95 flex flex-col items-center justify-center p-6 text-center backdrop-blur-md"
+                        className="absolute inset-0 z-20 glass-strong rounded-[var(--radius-xl)] flex flex-col items-center justify-center p-6 text-center"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <AlertCircle
-                          className="text-[#FF5252] mb-3"
-                          size={28}
-                        />
-                        <p className="text-sm font-medium text-[#f0f0f0] mb-5">
-                          Delete this version forever?
+                        <div className="w-12 h-12 rounded-full bg-[var(--accent-red-soft)] flex items-center justify-center mb-4">
+                          <AlertCircle className="text-[var(--accent-red)]" size={24} />
+                        </div>
+                        <p className="text-sm font-medium text-[var(--text-primary)] mb-5">
+                          Delete this prompt?
                         </p>
                         <div className="flex gap-3">
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-6 py-2 rounded-xl text-xs font-medium border border-[#333] hover:bg-[#222] transition-colors"
+                            className="px-5 py-2 rounded-xl text-xs font-semibold border border-[var(--border-default)] hover:bg-[var(--bg-surface)] transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={() => deletePrompt(prompt.id)}
-                            className="px-6 py-2 rounded-xl text-xs font-medium bg-[#FF5252] text-white hover:bg-[#FF5252]/80 transition-colors shadow-lg shadow-[#FF5252]/20"
+                            className="px-5 py-2 rounded-xl text-xs font-semibold bg-[var(--accent-red)] text-white hover:opacity-90 transition-all"
                           >
-                            Confirm Delete
+                            Delete
                           </button>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <div className="p-5 flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex gap-2 items-center">
+                  <div className="p-6">
+                    {/* Header Badges */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex gap-2 items-center flex-wrap">
                         {prompt.parentId && (
-                          <div
-                            className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border flex items-center gap-1"
-                            style={{
-                              color:
-                                prompt.relationType === "enhanced"
-                                  ? "#7FD88F"
-                                  : "#AAA0FA",
-                              backgroundColor:
-                                prompt.relationType === "enhanced"
-                                  ? "#7FD88F11"
-                                  : "#AAA0FA11",
-                              borderColor:
-                                prompt.relationType === "enhanced"
-                                  ? "#7FD88F22"
-                                  : "#AAA0FA22",
-                            }}
-                          >
+                          <span className={`badge ${prompt.relationType === "enhanced" ? "badge-green" : "badge-purple"}`}>
                             <Sparkles size={10} />
-                            {prompt.relationType.toUpperCase()}
-                          </div>
+                            {prompt.relationType}
+                          </span>
                         )}
                         {prompt.mode === "compare" && (
-                          <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EEB180]/10 text-[#EEB180] text-[10px] font-bold uppercase tracking-wider border border-[#EEB180]/20">
+                          <span className="badge badge-orange">
                             <BarChart2 size={10} /> Compare
                           </span>
                         )}
                         {prompt.mode === "evolve" && (
-                          <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#AAA0FA]/10 text-[#AAA0FA] text-[10px] font-bold uppercase tracking-wider border border-[#AAA0FA]/20">
+                          <span className="badge badge-purple">
                             <History size={10} /> Evolve
                           </span>
                         )}
                       </div>
                       {lineage.versions.length > 1 && (
-                        <div className="text-[10px] font-mono text-[#555] uppercase tracking-widest">
-                          Version {activeIndex + 1} of {lineage.versions.length}
+                        <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-widest">
+                          v{activeIndex + 1}/{lineage.versions.length}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex-1 min-h-[80px]">
+                    {/* Content */}
+                    <div className="min-h-[80px]">
                       {editingId === prompt.id ? (
-                        <div
-                          className="space-y-4"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
                           <textarea
                             ref={editRef}
-                            className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4 text-[14.5px] text-[#ddd] focus:border-[#555] focus:ring-0 resize-none min-h-[140px] max-h-[60vh] focus:outline-none overflow-y-auto"
+                            className="input-base w-full min-h-[140px] max-h-[60vh] resize-none"
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             autoFocus
@@ -864,31 +870,30 @@ const App = () => {
                           <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => setEditingId(null)}
-                              className="p-2 text-[#888] hover:text-[#f0f0f0] transition-colors"
+                              className="btn-ghost"
                             >
-                              <X size={20} />
+                              <X size={18} />
                             </button>
                             <button
                               onClick={() => saveEdit(prompt.id)}
-                              className="flex items-center gap-2 px-4 py-1.5 bg-[#f0f0f0] text-[#0a0a0a] rounded-lg text-xs font-bold shadow-md"
+                              className="btn-primary text-xs flex items-center gap-2"
                             >
-                              <Save size={14} /> Save Changes
+                              <Save size={14} /> Save
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-[15px] leading-relaxed text-[#bbb] whitespace-pre-wrap break-words line-clamp-4 group-hover:text-[#ddd] transition-colors">
+                        <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap break-words line-clamp-4 group-hover:text-[var(--text-primary)] transition-colors">
                           {prompt.content}
                         </p>
                       )}
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-[#222]/50 flex items-center justify-between">
+                    {/* Footer */}
+                    <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         {lineage.versions.length > 1 && (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <div onClick={(e) => e.stopPropagation()}>
                             <LineageTimeline
                               versions={lineage.versions}
                               activeIndex={activeIndex}
@@ -903,23 +908,19 @@ const App = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="text-[11px] font-mono text-[#555] uppercase tracking-widest">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
                           {prompt.timestamp}
-                        </div>
-                        {(prompt.models.length > 0 ||
-                          prompt.thoughts.length > 0) && (
-                            <span className="text-[#444] opacity-40">·</span>
-                          )}
+                        </span>
                         {prompt.models.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#777]">
-                            <Zap size={11} className="text-[#EEB180]" />
+                          <div className="flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
+                            <Zap size={10} className="text-[var(--accent-orange)]" />
                             {prompt.models.length}
                           </div>
                         )}
                         {prompt.thoughts.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#777]">
-                            <Brain size={11} className="text-[#AAA0FA]" />
+                          <div className="flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
+                            <Brain size={10} className="text-[var(--accent-purple)]" />
                             {prompt.thoughts.length}
                           </div>
                         )}
@@ -933,62 +934,53 @@ const App = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
-                        onClick={() =>
-                          copyToClipboard(prompt.content, prompt.id)
-                        }
-                        className={`p-2 rounded-lg transition-all ${copiedId === prompt.id
-                            ? "text-[#7FD88F] bg-[#7FD88F]/10"
-                            : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
-                          }`}
+                        onClick={() => copyToClipboard(prompt.content, prompt.id)}
+                        className={`btn-ghost p-2 ${copiedId === prompt.id ? "text-[var(--accent-green)]" : ""}`}
                         title="Copy"
                       >
-                        {copiedId === prompt.id ? (
-                          <Check size={16} />
-                        ) : (
-                          <Copy size={16} />
-                        )}
+                        {copiedId === prompt.id ? <Check size={15} /> : <Copy size={15} />}
                       </button>
                       <button
                         onClick={() => startEditing(prompt)}
-                        className="p-2 text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626] rounded-lg transition-all"
+                        className="btn-ghost p-2"
                         title="Edit"
                       >
-                        <Edit3 size={16} />
+                        <Edit3 size={15} />
                       </button>
                       <button
                         onClick={() => enhancePrompt(prompt)}
                         disabled={isEnhancingId === prompt.id}
-                        className="p-2 text-[#888] hover:text-[#7FD88F] hover:bg-[#7FD88F]/10 rounded-lg transition-all disabled:opacity-50"
+                        className="btn-ghost p-2 hover:text-[var(--accent-green)] disabled:opacity-50"
                         title="AI Enhance"
                       >
                         {isEnhancingId === prompt.id ? (
-                          <Loader2 size={16} className="animate-spin" />
+                          <Loader2 size={15} className="animate-spin" />
                         ) : (
-                          <Sparkles size={16} />
+                          <Sparkles size={15} />
                         )}
                       </button>
                       {prompt.parentId && (
                         <button
                           onClick={() => setSideBySidePromptId(prompt.id)}
-                          className="p-2 text-[#888] hover:text-[#60A5FA] hover:bg-[#60A5FA]/10 rounded-lg transition-all"
-                          title="Compare with Base"
+                          className="btn-ghost p-2 hover:text-[var(--accent-blue)]"
+                          title="Compare"
                         >
-                          <ArrowLeftRight size={16} />
+                          <ArrowLeftRight size={15} />
                         </button>
                       )}
                       <button
                         onClick={() => duplicatePrompt(prompt)}
-                        className="p-2 text-[#888] hover:text-[#EEB180] hover:bg-[#EEB180]/10 rounded-lg transition-all"
+                        className="btn-ghost p-2 hover:text-[var(--accent-orange)]"
                         title="Duplicate"
                       >
-                        <CopyPlus size={16} />
+                        <CopyPlus size={15} />
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(prompt.id)}
-                        className="p-2 text-[#888] hover:text-[#FF5252] hover:bg-[#FF5252]/10 rounded-lg transition-all"
+                        className="btn-ghost p-2 hover:text-[var(--accent-red)]"
                         title="Delete"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   )}
@@ -1011,61 +1003,66 @@ const App = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-xl"
+              className="absolute inset-0 bg-[var(--bg-overlay)] backdrop-blur-xl"
               onClick={() => setSelectedPromptId(null)}
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-4xl max-h-[90vh] bg-[#111] border border-[#222] rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+              className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-2xl flex flex-col"
             >
-              <div className="flex items-center justify-between p-6 border-b border-[#222] bg-[#161616]/50">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#222] flex items-center justify-center">
-                    <Archive size={16} className="text-[#888]" />
+                  <div className="w-9 h-9 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex items-center justify-center">
+                    <Archive size={16} className="text-[var(--text-tertiary)]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#f0f0f0]">
+                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                       Prompt Detail
                     </h3>
-                    <p className="text-[10px] text-[#888] font-mono">
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wider">
                       {selectedPrompt.timestamp}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex bg-[#0a0a0a] rounded-xl p-1 border border-[#222] mr-4">
+                <div className="flex items-center gap-3">
+                  {/* Mode Tabs */}
+                  <div className="flex bg-[var(--bg-primary)] rounded-xl p-1 border border-[var(--border-subtle)]">
                     <button
-                      onClick={() =>
-                        updatePromptMode(selectedPrompt.id, "none")
-                      }
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${selectedPrompt.mode === "none" ? "bg-[#222] text-white" : "text-[#555] hover:text-[#888]"}`}
+                      onClick={() => updatePromptMode(selectedPrompt.id, "none")}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${selectedPrompt.mode === "none"
+                        ? "bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                        }`}
                     >
                       Standard
                     </button>
                     <button
-                      onClick={() =>
-                        updatePromptMode(selectedPrompt.id, "compare")
-                      }
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "compare" ? "bg-[#EEB180]/20 text-[#EEB180]" : "text-[#555] hover:text-[#EEB180]/50"}`}
+                      onClick={() => updatePromptMode(selectedPrompt.id, "compare")}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "compare"
+                        ? "bg-[var(--accent-orange-soft)] text-[var(--accent-orange)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--accent-orange)]"
+                        }`}
                     >
-                      <BarChart2 size={12} /> Compare
+                      <BarChart2 size={11} /> Compare
                     </button>
                     <button
-                      onClick={() =>
-                        updatePromptMode(selectedPrompt.id, "evolve")
-                      }
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "evolve" ? "bg-[#AAA0FA]/20 text-[#AAA0FA]" : "text-[#555] hover:text-[#AAA0FA]/50"}`}
+                      onClick={() => updatePromptMode(selectedPrompt.id, "evolve")}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${selectedPrompt.mode === "evolve"
+                        ? "bg-[var(--accent-purple-soft)] text-[var(--accent-purple)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--accent-purple)]"
+                        }`}
                     >
-                      <History size={12} /> Evolve
+                      <History size={11} /> Evolve
                     </button>
                   </div>
                   <button
                     onClick={() => setSelectedPromptId(null)}
-                    className="p-2 rounded-xl text-[#555] hover:text-[#f0f0f0] hover:bg-[#222] transition-all"
+                    className="btn-ghost p-2"
                   >
-                    <X size={20} />
+                    <X size={18} />
                   </button>
                 </div>
               </div>
@@ -1177,8 +1174,8 @@ const App = () => {
                               )
                             }
                             className={`p-2 rounded-lg transition-all ${copiedId === selectedPrompt.id
-                                ? "text-[#7FD88F] bg-[#7FD88F]/10"
-                                : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
+                              ? "text-[#7FD88F] bg-[#7FD88F]/10"
+                              : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
                               }`}
                             title="Copy"
                           >
@@ -1572,8 +1569,8 @@ const App = () => {
                           )
                         }
                         className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${copiedId === `base-${basePrompt.id}`
-                            ? "bg-[#7FD88F]/20 text-[#7FD88F]"
-                            : "text-[#555] hover:text-[#888] hover:bg-[#222]"
+                          ? "bg-[#7FD88F]/20 text-[#7FD88F]"
+                          : "text-[#555] hover:text-[#888] hover:bg-[#222]"
                           }`}
                       >
                         {copiedId === `base-${basePrompt.id}` ? (
@@ -1591,10 +1588,10 @@ const App = () => {
                           )
                         }
                         className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${copiedId === sideBySidePrompt.id
-                            ? "bg-[#7FD88F]/20 text-[#7FD88F]"
-                            : sideBySidePrompt.relationType === "enhanced"
-                              ? "text-[#7FD88F] hover:bg-[#7FD88F]/10"
-                              : "text-[#AAA0FA] hover:bg-[#AAA0FA]/10"
+                          ? "bg-[#7FD88F]/20 text-[#7FD88F]"
+                          : sideBySidePrompt.relationType === "enhanced"
+                            ? "text-[#7FD88F] hover:bg-[#7FD88F]/10"
+                            : "text-[#AAA0FA] hover:bg-[#AAA0FA]/10"
                           }`}
                       >
                         {copiedId === sideBySidePrompt.id ? (
@@ -1615,14 +1612,14 @@ const App = () => {
           })()}
       </AnimatePresence>
 
-      <footer className="max-w-4xl mx-auto px-6 py-12 text-center opacity-20">
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+      <footer className="max-w-5xl mx-auto px-6 py-16 text-center">
+        <div className="flex items-center justify-center gap-3 mb-4 opacity-20">
+          <div className="w-1 h-1 bg-[var(--text-tertiary)] rounded-full" />
+          <div className="w-1 h-1 bg-[var(--text-tertiary)] rounded-full" />
+          <div className="w-1 h-1 bg-[var(--text-tertiary)] rounded-full" />
         </div>
-        <p className="text-[10px] font-mono tracking-[0.2em] uppercase">
-          Built for Power Users
+        <p className="text-[10px] font-mono tracking-[0.15em] uppercase text-[var(--text-muted)]">
+          Prompt Library
         </p>
       </footer>
     </div>

@@ -90,30 +90,44 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-6 pt-6 custom-scrollbar">
                 {groupedPrompts.length === 0 ? (
                     <div className="text-center py-10 opacity-40">
                         <p className="text-xs font-mono uppercase">No prompts found</p>
                     </div>
                 ) : (
                     groupedPrompts.map((stack) => {
-                        const topPrompt = stack[0]; // The newest one
-                        // A stack is selected if ANY of its items are selected
+                        const topPrompt = stack[0];
                         const isStackSelected = stack.some(p => p.id === selectedId);
                         const variantCount = stack.length;
 
                         return (
                             <div
                                 key={topPrompt.id}
-                                className="relative group perspective select-none"
-                                onContextMenu={(e) => handleContextMenu(e, stack)}
+                                className="relative group perspective select-none mb-6"
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setContextMenu({
+                                        x: rect.right - 10,  // Overlap slightly
+                                        y: rect.top,
+                                        stack
+                                    });
+                                }}
                             >
-                                {/* Stack Depth Effect Layers */}
+                                {/* Stack Depth Effect Layers (Visible & Upwards) */}
                                 {variantCount > 1 && (
                                     <>
-                                        <div className="absolute top-1 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.96] translate-y-1 opacity-60 pointer-events-none" />
+                                        <div
+                                            className="absolute top-0 left-0 w-full h-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl z-0"
+                                            style={{ transform: "translateY(-6px) scale(0.96)" }}
+                                        />
                                         {variantCount > 2 && (
-                                            <div className="absolute top-2 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.92] translate-y-2 opacity-30 pointer-events-none" />
+                                            <div
+                                                className="absolute top-0 left-0 w-full h-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl z-[-1]"
+                                                style={{ transform: "translateY(-12px) scale(0.92)" }}
+                                            />
                                         )}
                                     </>
                                 )}
@@ -121,13 +135,16 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                                 {/* Main Card */}
                                 <div
                                     onClick={() => onSelect(topPrompt.id)}
-                                    className={`relative w-full text-left p-3 rounded-xl border transition-all duration-200 cursor-pointer ${isStackSelected
-                                            ? "bg-[var(--bg-surface)] border-[var(--border-strong)] shadow-xl translate-x-1"
-                                            : "bg-[var(--bg-primary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:shadow-md"
+                                    className={`relative z-10 w-full text-left p-4 rounded-xl border cursor-pointer transition-colors duration-200 ${isStackSelected
+                                            ? "bg-[var(--bg-surface)] border-[var(--border-default)] shadow-lg"
+                                            : "bg-[var(--bg-primary)] border-[var(--border-subtle)] hover:border-[var(--border-default)]"
                                         }`}
                                 >
-                                    <div className="flex justify-between items-start mb-2 pointer-events-none">
-                                        <div className="flex items-center gap-1.5">
+                                    <div className="flex justify-between items-center mb-2 pointer-events-none">
+                                        <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wide">
+                                            {topPrompt.timestamp.split(" ")[0]}
+                                        </span>
+                                        <div className="flex items-center gap-2">
                                             {topPrompt.mode === "evolved" || topPrompt.parentId ? (
                                                 <div className={`p-1 rounded-md ${topPrompt.relationType === 'enhanced'
                                                         ? 'bg-[var(--accent-green-soft)] text-[var(--accent-green)]'
@@ -135,21 +152,17 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                                                     }`}>
                                                     {topPrompt.relationType === 'enhanced' ? <Sparkles size={10} /> : <History size={10} />}
                                                 </div>
-                                            ) : (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] ml-1" />
+                                            ) : null}
+
+                                            {variantCount > 1 && (
+                                                <span className="text-[9px] font-bold bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)]">
+                                                    {variantCount}
+                                                </span>
                                             )}
-                                            <span className="text-[10px] font-mono text-[var(--text-muted)]">
-                                                {topPrompt.timestamp.split(" ")[0]}
-                                            </span>
                                         </div>
-                                        {variantCount > 1 && (
-                                            <span className="text-[9px] font-bold bg-[var(--bg-tertiary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)]">
-                                                {variantCount}
-                                            </span>
-                                        )}
                                     </div>
 
-                                    <p className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 leading-snug pointer-events-none">
+                                    <p className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 leading-relaxed pointer-events-none">
                                         {topPrompt.content || <span className="italic opacity-50">Empty prompt</span>}
                                     </p>
                                 </div>
@@ -163,18 +176,20 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
             <AnimatePresence>
                 {contextMenu && (
                     <div
-                        className="fixed inset-0 z-50 pointer-events-none"
-                        style={{ top: 0, left: 0 }}
+                        className="fixed inset-0 z-50"
+                        onClick={() => setContextMenu(null)}
                     >
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, x: -10 }}
                             animate={{ opacity: 1, scale: 1, x: 0 }}
                             exit={{ opacity: 0, scale: 0.95, x: -10 }}
-                            className="absolute pointer-events-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-2 w-64 max-h-[60vh] overflow-y-auto flex flex-col gap-1 backdrop-blur-3xl"
+                            transition={{ duration: 0.1 }}
+                            className="fixed bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-xl shadow-2xl p-3 w-72 max-h-[60vh] overflow-y-auto flex flex-col gap-2 backdrop-blur-3xl"
                             style={{
                                 top: Math.min(contextMenu.y, window.innerHeight - 300),
-                                left: contextMenu.x + 10
+                                left: contextMenu.x
                             }}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <div className="px-3 py-2 text-[10px] font-bold uppercase text-[var(--text-muted)] border-b border-[var(--border-subtle)] mb-1">
                                 Version History
@@ -187,15 +202,15 @@ const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }
                                         setContextMenu(null);
                                     }}
                                     className={`text-left p-2 rounded-lg text-xs transition-colors group flex items-start gap-2 ${p.id === selectedId
-                                            ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                                            : "hover:bg-[var(--bg-primary)] text-[var(--text-secondary)]"
+                                        ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                                        : "hover:bg-[var(--bg-primary)] text-[var(--text-secondary)]"
                                         }`}
                                 >
                                     <div className="mt-0.5 shrink-0">
                                         {p.mode === "evolved" || p.parentId ? (
                                             <div className={`${p.relationType === 'enhanced'
-                                                    ? 'text-[var(--accent-green)]'
-                                                    : 'text-[var(--accent-purple)]'
+                                                ? 'text-[var(--accent-green)]'
+                                                : 'text-[var(--accent-purple)]'
                                                 }`}>
                                                 {p.relationType === 'enhanced' ? <Sparkles size={12} /> : <History size={12} />}
                                             </div>

@@ -26,3 +26,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+app/.DS_Store
+app/api/.DS_Store

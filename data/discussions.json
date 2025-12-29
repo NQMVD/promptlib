@@ -26,5 +26,38 @@
       "Add a 'Prompt Library' view where users can browse, search, and filter all saved prompts and their descriptions."
     ],
     "created_at": "2025-12-29T20:30:25.706Z"
+  },
+  {
+    "id": "8cc3ad49-ed5c-425d-bae3-c602825326fd",
+    "prompt_id": "4e87a583-0e29-4664-9c35-278fe644c8a3",
+    "questions": [
+      "Should the prompt studio be a web application or a desktop application? If web, what browser compatibility is required?",
+      "What specific design system elements from Anthropic/Claude's interface should be prioritized (e.g., specific color hex codes, button styles, typography, spacing)?",
+      "Is user authentication required, or should this be a local-only tool using browser storage (e.g., IndexedDB)?",
+      "For the OpenRouter integration, how should API keys be managed (e.g., user-provided in settings, environment variables)?",
+      "What specific OpenRouter model should be used as the default for 'Enhance' and 'Evolve' features, or should the user select from a list?",
+      "What are the precise parameters for the 'Enhance' feature? (e.g., fix grammar, restructure for clarity, expand details, make concise).",
+      "For the 'Evolve' feature, does the user provide free-text notes, or should they be categorized (e.g., 'Critique', 'New Requirement', 'Tone Adjustment')?",
+      "In 'Discussion Mode', should the generated questions and ideas be interactive (e.g., clicking a question populates the input field) or read-only?",
+      "For the comparison view, how should conflicts between the base prompt and variants be visually highlighted (e.g., side-by-side diff, line-by-line coloring)?",
+      "How long should version history be retained? Is there a requirement to export this history?",
+      "How should the 'smart connection' between prompts be visualized? (e.g., a tree graph, a list of dependencies, or a visual timeline?)",
+      "Are there any constraints on prompt length or complexity for the features that involve model calls?",
+      "What constitutes a 'variant'? Are 'Enhance' and 'Evolve' considered separate branches or sequential versions of the same prompt?",
+      "Is there a need for a 'prompt library' or template system to start from?"
+    ],
+    "additions": [
+      "Add a 'Settings' view to input and securely store the OpenRouter API key and configure default model parameters (temperature, max tokens).",
+      "Implement a local database (e.g., Dexie.js for IndexedDB) to handle prompt creation, versioning, and storage without requiring a backend server.",
+      "Create a 'Prompt Versioning' data structure that links variants to their parent prompts using unique IDs (UUIDs), enabling a tree-like history.",
+      "Add a 'Prompt Details' sidebar to each prompt entry showing metadata: creation date, last modified, model used for modification, and token count.",
+      "Implement a 'Diff View' component that visually compares two prompts (Base vs. Variant) using a library like 'react-diff-viewer' or similar.",
+      "For the 'Discussion Mode', add a 'Insert' button next to each generated question/idea that appends the text to the current prompt editor.",
+      "Add an 'Export' function allowing users to download their prompt library as a JSON file or individual prompts as TXT/MD files.",
+      "Include a 'System Instruction' field separate from the main prompt input, as this is standard practice for AI agents.",
+      "Add a 'Cancel' or 'Stop Generation' button for API calls to handle long-running requests.",
+      "Include a 'Toast' notification system to alert the user of successful saves, API errors, or copy-to-clipboard actions."
+    ],
+    "created_at": "2025-12-29T21:23:41.858Z"
   }
 ]

@@ -1,0 +1,34 @@
+TODOS
+	IDEAS
+		add "add to evolve notes" button to each additions entry
+		add a answer textbox to the questions entries which the user can fill out to then add question and answer to the evolve notes too
+		add branch like lines to the prompt entries with children to connect them, just like the tree command
+		add a multi-modell mode for enhancing which lets the user choose which answer is best
+		Add a 'Prompt Library' view where users can browse, search, and filter all saved prompts and their descriptions.
+		Create a 'Feedback Loop' UI in the Evolve tab where users can rate the evolved prompt (thumbs up/down) to potentially train a custom fine-tuning dataset.
+		Add an 'Export' function allowing users to download their prompt library as a JSON file or individual prompts as TXT/MD files.
+		add a chooser for enhance target
+			enhance
+			enhance creative
+			enhance minimal
+			enhance technical
+		add an archive for prompts
+		add a prompt title generare button
+	BUGS
+		long prompts cant be scrolled when in compare view, same for other lists like the ones in the discussion view
+	IMPROVEMENTS
+		keyboard shortcuts for everything
+		saving with cmd+enter
+		visual improvements
+			fix colors all being terracotta...
+			fix orange focus border being to extreme
+			textboxes should blend in with the background maybe
+	CHANGES
+		default model should not be a sonnet model lol, go with GPT OSS again
+		more providers again
+			groq
+			inception
+			z.ai
+		proper system prompts, take the ones from old version
+		invert order of additions for both evolution notes and child variants in the sidebar
+

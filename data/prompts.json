@@ -16,5 +16,14 @@
     "id": "a7f57b6e-454f-45e8-9915-aacbdde248fa",
     "created_at": "2025-12-29T20:17:06.293Z",
     "updated_at": "2025-12-29T20:17:06.293Z"
+  },
+  {
+    "title": "Prompt studio (Copy)",
+    "content": "built me a prompt studio in the darkmode style and design language of anthropic/claude. it should allow me to work on prompts for AI agents. i need to be able to create prompts and edit them when i want to, also duplicate or delete them. also there should be a enhance button that sends the prompt to a configurable model via openrouter to be optimized. also there should be a evolve feature that allows me to collect a list of notes for a prompt, which on click of the evolve button will be send together with the prompt again to a model which then evolvs a new prompt according to the feedback in the notes. it would also be cool to have a discussion mode, where the prompt will be send to a model with the task to generate questions to ask the user and also additional ideas that the prompts could benefit from, both lists of questions and additions should be placed in the same view next to each other so that the user can interact with them. i imagine the layout to allow me to compare the variants (enhanced and evolved) of a prompt with its base, in general i want to be able to view previous versions of all prompts in a clear and structured way. for all of this you probably need to figure out a smart way of connecting prompts and their variants together.",
+    "parent_id": null,
+    "variant_type": "base",
+    "id": "2c784504-489d-4241-a1f6-47be12164e32",
+    "created_at": "2025-12-29T20:18:54.107Z",
+    "updated_at": "2025-12-29T20:18:54.107Z"
   }
 ]

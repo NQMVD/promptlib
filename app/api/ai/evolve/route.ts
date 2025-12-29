@@ -41,9 +41,17 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json()
-    const evolvedPrompt = data.choices[0]?.message?.content || ""
+    let evolvedPrompt = data.choices[0]?.message?.content || ""
 
-    return NextResponse.json({ evolvedPrompt })
+    // Clean up potential markdown code blocks and chatter
+    if (evolvedPrompt.includes("```")) {
+      const match = evolvedPrompt.match(/```(?:\w+)?\n([\s\S]*?)\n```/)
+      if (match) {
+        evolvedPrompt = match[1]
+      }
+    }
+
+    return NextResponse.json({ evolvedPrompt: evolvedPrompt.trim() })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to evolve prompt" },

@@ -39,9 +39,17 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json()
-    const enhancedPrompt = data.choices[0]?.message?.content || ""
+    let enhancedPrompt = data.choices[0]?.message?.content || ""
 
-    return NextResponse.json({ enhancedPrompt })
+    // Clean up potential markdown code blocks and chatter
+    if (enhancedPrompt.includes("```")) {
+      const match = enhancedPrompt.match(/```(?:\w+)?\n([\s\S]*?)\n```/)
+      if (match) {
+        enhancedPrompt = match[1]
+      }
+    }
+
+    return NextResponse.json({ enhancedPrompt: enhancedPrompt.trim() })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to enhance prompt" },

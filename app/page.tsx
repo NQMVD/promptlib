@@ -316,7 +316,14 @@ export default function Home() {
         }),
       })
 
-      const data = await response.json()
+      let data
+      const contentType = response.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json()
+      } else {
+        const text = await response.text()
+        throw new Error(text || "Server returned a non-JSON response")
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to generate discussion")

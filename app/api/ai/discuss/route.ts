@@ -44,16 +44,7 @@ export async function POST(request: Request) {
     const content = data.choices[0]?.message?.content || ""
 
     try {
-      // Find the first '{' and last '}' to extract JSON even if there's preamble or markdown
-      const start = content.indexOf("{")
-      const end = content.lastIndexOf("}")
-      
-      if (start === -1 || end === -1) {
-        throw new Error("No JSON object found in response")
-      }
-      
-      const jsonStr = content.substring(start, end + 1)
-      const parsed = JSON.parse(jsonStr)
+      const parsed = JSON.parse(content)
 
       return NextResponse.json({
         questions: Array.isArray(parsed.questions) ? parsed.questions : [],

@@ -39,15 +39,7 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json()
-    let enhancedPrompt = data.choices[0]?.message?.content || ""
-
-    // Clean up potential markdown code blocks and chatter
-    if (enhancedPrompt.includes("```")) {
-      const match = enhancedPrompt.match(/```(?:\w+)?\n([\s\S]*?)\n```/)
-      if (match) {
-        enhancedPrompt = match[1]
-      }
-    }
+    const enhancedPrompt = data.choices[0]?.message?.content || ""
 
     return NextResponse.json({ enhancedPrompt: enhancedPrompt.trim() })
   } catch (error) {

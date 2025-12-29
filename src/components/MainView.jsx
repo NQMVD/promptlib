@@ -1,14 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronUp, ChevronDown, Check, Copy, Trash2 } from "lucide-react";
 import PromptEditor from "./PromptEditor";
-import EvolutionPanel from "./EvolutionPanel";
 import ComparisonView from "./ComparisonView";
-import { Trash2, Copy, History, GitCompare } from "lucide-react";
+import EvolutionSplitView from "./EvolutionSplitView";
+import FloatingActionBar from "./FloatingActionBar";
 
-/**
- * MainView
- * The container for the detail/editing area. 
- * Manages the "Active" prompt and switching between Edit/Compare modes.
- */
 const MainView = ({
     prompt,
     allPrompts,
@@ -16,107 +13,149 @@ const MainView = ({
     onDelete,
     onEvolve,
     onEnhance,
+    onSelectPrompt,
     isProcessing
 }) => {
-    const [comparisonTargetId, setComparisonTargetId] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
+
+    // -- Stack Navigation Logic --
+    // We must call hooks unconditionally!
+    const promptStack = useMemo(() => {
+        if (!prompt) return [];
+
+        // Find absolute root
+        let current = prompt;
+        while (current.parentId && allPrompts.find(p => p.id === current.parentId)) {
+            const parent = allPrompts.find(p => p.id === current.parentId);
+            if (parent) current = parent;
+            else break;
+        }
+        const rootId = current.id;
+
+        // Get all prompts that trace back to this root
+        const stack = allPrompts.filter(p => {
+            let trace = p;
+            while (trace.parentId && trace.parentId !== rootId && allPrompts.find(x => x.id === trace.parentId)) {
+                trace = allPrompts.find(x => x.id === trace.parentId);
+            }
+            return trace.id === rootId || p.id === rootId;
+        });
+
+        // Sort by date desc (newest on top)
+        return stack.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }, [prompt ? prompt.id : null, allPrompts]); // Safe dependency
+
+    const currentIndex = prompt ? promptStack.findIndex(p => p.id === prompt.id) : -1;
+
+    const handleNext = () => {
+        if (currentIndex < promptStack.length - 1) {
+            onSelectPrompt(promptStack[currentIndex + 1].id);
+        }
+    };
+    const handlePrev = () => {
+        if (currentIndex > 0) {
+            onSelectPrompt(promptStack[currentIndex - 1].id);
+        }
+    };
+
+    const updateMode = (newMode) => {
+        if (prompt) {
+            const updated = { ...prompt, mode: newMode };
+            onUpdate(prompt.id, prompt.content, newMode);
+        }
+    };
+
 
     if (!prompt) {
         return (
-            <div className="flex-1 bg-[var(--bg-primary)] flex items-center justify-center text-[var(--text-muted)]">
-                <div className="text-center">
-                    <p>Select a prompt to view details</p>
+            <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)] text-[var(--text-muted)]">
+                <div className="text-center opacity-50">
+                    <p className="text-lg font-mono">Select a prompt to begin</p>
                 </div>
             </div>
         );
     }
 
-    // Get other versions (mock logic or real logic depending on data structure)
-    // Assuming 'allPrompts' contains everything and we can find related ones if we had lineage data.
-    // For now, let's just show *all* prompts in the history dropdown for comparison for simplicity, 
-    // or filtered if we had grouping.
+    // Render Content based on Mode
+    const renderContent = () => {
+        if (prompt.mode === "compare") {
+            return <ComparisonView
+                leftPrompt={prompt}
+                allPrompts={allPrompts}
+                onClose={() => updateMode("none")}
+            />;
+        }
+        if (prompt.mode === "evolve") {
+            return <EvolutionSplitView
+                prompt={prompt}
+                onUpdate={onUpdate}
+                onEvolve={onEvolve}
+                isProcessing={isProcessing}
+            />;
+        }
 
-    // Actually, we need to respect the request "remove lineage visualization" but we still need 
-    // to be able to "compare variants". So we need a simple list of "Related" or "History".
-    // Let's assume for this refactor that we just list other prompts as potential comparison targets.
-    const otherPrompts = allPrompts.filter(p => p.id !== prompt.id);
-
-    if (comparisonTargetId) {
-        const target = allPrompts.find(p => p.id === comparisonTargetId);
+        // Default: Editor
         return (
-            <ComparisonView
-                leftPrompt={target}
-                rightPrompt={prompt}
-                onClose={() => setComparisonTargetId(null)}
-            />
+            <div className="flex flex-col h-full items-center justify-center p-8 relative">
+                <div className="w-full max-w-3xl h-full flex flex-col relative">
+                    <PromptEditor
+                        prompt={prompt}
+                        onUpdate={onUpdate}
+                        readOnly={false}
+                    />
+                </div>
+            </div>
         );
-    }
+    };
 
     return (
-        <div className="flex-1 flex flex-col h-screen bg-[var(--bg-primary)] overflow-hidden">
+        <main className="flex-1 h-full relative flex flex-col overflow-hidden bg-[var(--bg-primary)]">
 
-            {/* Toolbar */}
-            <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]">
-                <div className="flex items-center gap-4">
-                    <span className="text-xs font-mono text-[var(--text-muted)]">ID: {prompt.id.toString().slice(-6)}</span>
-                    <span className="text-xs font-mono text-[var(--text-muted)]">{prompt.timestamp}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-
-                    {/* Compare Button - Popover or simple toggle for now */}
-                    <div className="relative group">
-                        <button className="btn-ghost p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" title="Compare">
-                            <GitCompare size={18} />
-                        </button>
-                        {/* Simple dropdown on hover for prototype */}
-                        <div className="absolute right-0 top-full mt-2 w-64 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-1">
-                            <div className="px-3 py-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-subtle)] mb-1">
-                                Compare with...
-                            </div>
-                            <div className="max-h-60 overflow-y-auto">
-                                {otherPrompts.length === 0 && <div className="p-3 text-xs text-[var(--text-muted)]">No other prompts</div>}
-                                {otherPrompts.map(p => (
-                                    <button
-                                        key={p.id}
-                                        onClick={() => setComparisonTargetId(p.id)}
-                                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-lg truncate"
-                                    >
-                                        {p.content.slice(0, 40)}...
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
+            {/* Navigation Arrows (Floating on Right) */}
+            {promptStack.length > 1 && prompt.mode === 'none' && (
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-40">
                     <button
-                        onClick={() => onDelete(prompt.id)}
-                        className="btn-ghost p-2 text-red-400 hover:text-red-300 hover:bg-red-900/10" title="Delete"
+                        onClick={handlePrev}
+                        disabled={currentIndex <= 0}
+                        className="p-2 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] shadow-lg hover:bg-[var(--bg-surface)] disabled:opacity-30 transition-all text-[var(--text-secondary)]"
+                        title="Newer Version"
                     >
-                        <Trash2 size={18} />
+                        <ChevronUp size={20} />
+                    </button>
+                    <div className="text-[10px] font-mono text-center text-[var(--text-muted)] py-1 bg-[var(--bg-primary)]/80 backdrop-blur rounded-md">
+                        {promptStack.length - currentIndex} / {promptStack.length}
+                    </div>
+                    <button
+                        onClick={handleNext}
+                        disabled={currentIndex >= promptStack.length - 1}
+                        className="p-2 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] shadow-lg hover:bg-[var(--bg-surface)] disabled:opacity-30 transition-all text-[var(--text-secondary)]"
+                        title="Older Version"
+                    >
+                        <ChevronDown size={20} />
                     </button>
                 </div>
+            )}
+
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-h-0 overflow-hidden relative">
+                {renderContent()}
             </div>
 
-            {/* Editor Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <div className="max-w-4xl mx-auto w-full">
-                    <PromptEditor
-                        content={prompt.content}
-                        onChange={(newContent) => onUpdate(prompt.id, newContent)}
-                        onSave={() => { }} // Auto-save usually, or distinct save
+            {/* Floating Action Bar */}
+            <div className="pointer-events-none absolute inset-0 z-50 flex items-end justify-center pb-8">
+                <div className="pointer-events-auto">
+                    <FloatingActionBar
+                        mode={prompt.mode || "none"}
+                        setMode={updateMode}
+                        onDelete={() => onDelete(prompt.id)}
+                        onEnhance={onEnhance}
+                        isEnhancing={isProcessing}
                     />
                 </div>
             </div>
 
-            {/* Evolution/Enhancement Panel - Sticky Bottom */}
-            <div className="shrink-0 z-20">
-                <EvolutionPanel
-                    onEvolve={onEvolve}
-                    onEnhance={onEnhance}
-                    isProcessing={isProcessing}
-                />
-            </div>
-        </div>
+        </main>
     );
 };
 

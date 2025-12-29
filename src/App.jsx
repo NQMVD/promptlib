@@ -99,8 +99,13 @@ const App = () => {
     setSelectedPromptId(newId);
   };
 
-  const updatePrompt = (id, newContent) => {
-    setPrompts(prev => prev.map(p => p.id === id ? { ...p, content: newContent } : p));
+  const updatePrompt = (id, newContent, newMode) => {
+    setPrompts(prev => prev.map(p => {
+      if (p.id !== id) return p;
+      const updates = { content: newContent };
+      if (newMode !== undefined) updates.mode = newMode;
+      return { ...p, ...updates };
+    }));
   };
 
   const deletePrompt = (id) => {
@@ -283,6 +288,7 @@ const App = () => {
           onDelete={deletePrompt}
           onEvolve={evolvePrompt}
           onEnhance={enhancePrompt}
+          onSelectPrompt={setSelectedPromptId}
           isProcessing={isProcessing}
         />
       </div>

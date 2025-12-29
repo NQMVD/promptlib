@@ -1,100 +1,216 @@
-import React from "react";
-import { Plus, Search, Archive, ChevronRight } from "lucide-react";
+import React, { useMemo, useState, useEffect } from "react";
+import { Search, Plus, Sparkles, History, MoreVertical, Copy, Trash2, Edit3, CornerDownRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-/**
- * Sidebar Component
- * Displays a list of prompt lineages (grouping variants).
- */
 const Sidebar = ({ prompts, selectedId, onSelect, onAdd, onSearch, searchQuery }) => {
-    // Group prompts by "lineage" or concept. 
-    // For now, we will just list all prompts but we could group them by parentId in the future if needed.
-    // The plan mentioned showing "Basic" list items.
+    const [contextMenu, setContextMenu] = useState(null);
 
-    // We want to show only "root" or distinct ideas, but the current data model makes everything a prompt.
-    // We'll filter to show only prompts that are either roots (no parent) OR
-    // if we want a flat list, we can just show them all. 
-    // Given the "clean list" requirement, let's try to group them conceptually if possible, 
-    // or just show the latest modified ones.
+    // Close context menu on click outside
+    useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        window.addEventListener("click", handleClick);
+        return () => window.removeEventListener("click", handleClick);
+    }, []);
 
-    // Simple approach first: Show all, but styled nicely.
+    // 1. Group prompts by lineage
+    const groupedPrompts = useMemo(() => {
+        // Helper to find root ID
+        const findRoot = (id, all) => {
+            let current = all.find(p => p.id === id);
+            const visited = new Set();
+            while (current && current.parentId && !visited.has(current.id)) {
+                visited.add(current.id);
+                const parent = all.find(p => p.id === current.parentId);
+                if (!parent) break;
+                current = parent;
+            }
+            return current ? current.id : id;
+        };
+
+        const groups = {};
+
+        // Group prompts by their root
+        prompts.forEach(p => {
+            const rootId = findRoot(p.id, prompts);
+            if (!groups[rootId]) {
+                groups[rootId] = [];
+            }
+            groups[rootId].push(p);
+        });
+
+        // Sort stacks by the timestamp of the LATEST prompt in the stack
+        return Object.values(groups).map(stack => {
+            // Sort variants in stack by date desc (newest first)
+            stack.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            return stack;
+        }).sort((stackA, stackB) => {
+            const latestA = stackA[0];
+            const latestB = stackB[0];
+            return new Date(latestB.timestamp) - new Date(latestA.timestamp);
+        });
+    }, [prompts]);
+
+    const handleContextMenu = (e, stack) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            stack
+        });
+    };
 
     return (
-        <div className="w-80 border-r border-[var(--border-subtle)] bg-[var(--bg-secondary)] flex flex-col h-screen">
-            {/* Header */}
+        <aside className="w-80 bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)] flex flex-col h-full flex-shrink-0 z-20 relative">
             <div className="p-4 border-b border-[var(--border-subtle)]">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent-orange)] to-[#CE9160] flex items-center justify-center shadow-lg">
-                        <Archive size={16} className="text-white" />
-                    </div>
-                    <h1 className="font-semibold text-[var(--text-primary)] tracking-tight">Prompt Library</h1>
-                </div>
-
                 <button
                     onClick={onAdd}
-                    className="btn-primary w-full justify-center"
+                    className="w-full bg-[var(--accent-primary)] text-white h-10 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[var(--accent-primary)]/90 transition-all shadow-lg shadow-[var(--accent-primary)]/20 mb-4"
                 >
-                    <Plus size={16} />
-                    New Prompt
+                    <Plus size={16} /> New Prompt
                 </button>
-            </div>
-
-            {/* Search */}
-            <div className="p-3">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
+                <div className="relative group">
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--text-primary)] transition-colors"
+                        size={14}
+                    />
                     <input
                         type="text"
                         placeholder="Search prompts..."
-                        className="input-base w-full pl-9 py-2 text-sm"
                         value={searchQuery}
                         onChange={(e) => onSearch(e.target.value)}
+                        className="w-full bg-[var(--bg-tertiary)] text-[var(--text-primary)] h-9 pl-9 pr-4 rounded-lg text-sm border border-transparent focus:border-[var(--border-strong)] focus:outline-none transition-all placeholder-[var(--text-muted)]"
                     />
                 </div>
             </div>
 
-            {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                {prompts.length === 0 ? (
-                    <div className="text-center py-10 px-4">
-                        <p className="text-xs text-[var(--text-muted)]">No prompts found.</p>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+                {groupedPrompts.length === 0 ? (
+                    <div className="text-center py-10 opacity-40">
+                        <p className="text-xs font-mono uppercase">No prompts found</p>
                     </div>
                 ) : (
-                    prompts.map((prompt) => (
-                        <button
-                            key={prompt.id}
-                            onClick={() => onSelect(prompt.id)}
-                            className={`w-full text-left p-3 rounded-lg transition-all group relative border ${selectedId === prompt.id
-                                    ? "bg-[var(--bg-surface)] border-[var(--border-strong)] shadow-xs"
-                                    : "border-transparent hover:bg-[var(--bg-surface)] hover:border-[var(--border-subtle)]"
-                                }`}
-                        >
-                            <div className="flex items-start justify-between gap-2">
-                                <p className={`text-sm font-medium line-clamp-2 ${selectedId === prompt.id ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
-                                    }`}>
-                                    {prompt.content || "Untitled Prompt"}
-                                </p>
-                                {selectedId === prompt.id && (
-                                    <ChevronRight size={14} className="text-[var(--accent-primary)] shrink-0 mt-1" />
+                    groupedPrompts.map((stack) => {
+                        const topPrompt = stack[0]; // The newest one
+                        const isStackSelected = stack.some(p => p.id === selectedId);
+                        const variantCount = stack.length;
+
+                        return (
+                            <div
+                                key={topPrompt.id}
+                                className="relative group perspective"
+                                onContextMenu={(e) => handleContextMenu(e, stack)}
+                            >
+                                {/* Stack Depth Effect Layers */}
+                                {variantCount > 1 && (
+                                    <>
+                                        <div className="absolute top-1 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.96] translate-y-1 opacity-60 z-0" />
+                                        {variantCount > 2 && (
+                                            <div className="absolute top-2 left-0 w-full h-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl transform scale-[0.92] translate-y-2 opacity-30 -z-10" />
+                                        )}
+                                    </>
                                 )}
+
+                                {/* Main Card */}
+                                <button
+                                    onClick={() => onSelect(topPrompt.id)}
+                                    className={`relative w-full text-left p-3 rounded-xl border transition-all duration-200 z-10 ${isStackSelected
+                                            ? "bg-[var(--bg-surface)] border-[var(--border-strong)] shadow-xl translate-x-1"
+                                            : "bg-[var(--bg-primary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:shadow-md"
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                            {topPrompt.mode === "evolved" || topPrompt.parentId ? (
+                                                <div className={`p-1 rounded-md ${topPrompt.relationType === 'enhanced'
+                                                        ? 'bg-[var(--accent-green-soft)] text-[var(--accent-green)]'
+                                                        : 'bg-[var(--accent-purple-soft)] text-[var(--accent-purple)]'
+                                                    }`}>
+                                                    {topPrompt.relationType === 'enhanced' ? <Sparkles size={10} /> : <History size={10} />}
+                                                </div>
+                                            ) : (
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] ml-1" />
+                                            )}
+                                            <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                                                {topPrompt.timestamp.split(" ")[0]}
+                                            </span>
+                                        </div>
+                                        {variantCount > 1 && (
+                                            <span className="text-[9px] font-bold bg-[var(--bg-tertiary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)]">
+                                                {variantCount}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <p className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 leading-snug">
+                                        {topPrompt.content || <span className="italic opacity-50">Empty prompt</span>}
+                                    </p>
+
+                                </button>
                             </div>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] text-[var(--text-muted)] font-mono">{prompt.timestamp}</span>
-                                {prompt.mode !== "none" && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider">
-                                        {prompt.mode}
-                                    </span>
-                                )}
-                            </div>
-                        </button>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
-            {/* Footer / User Info could go here */}
-            <div className="p-3 border-t border-[var(--border-subtle)] text-center">
-                <p className="text-[10px] text-[var(--text-muted)]">v2.0 Refactor</p>
-            </div>
-        </div>
+            {/* Context Menu Portal */}
+            <AnimatePresence>
+                {contextMenu && (
+                    <div
+                        className="fixed inset-0 z-50 pointer-events-none"
+                        style={{ top: 0, left: 0 }}
+                    >
+                        {/* Visual backdrop is handled by event listener for click-away */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                            animate={{ opacity: 1, scale: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                            className="absolute pointer-events-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-2 w-64 max-h-[60vh] overflow-y-auto flex flex-col gap-1 backdrop-blur-3xl"
+                            style={{
+                                top: Math.min(contextMenu.y, window.innerHeight - 300),
+                                left: contextMenu.x + 10
+                            }}
+                        >
+                            <div className="px-3 py-2 text-[10px] font-bold uppercase text-[var(--text-muted)] border-b border-[var(--border-subtle)] mb-1">
+                                Version History
+                            </div>
+                            {contextMenu.stack.map(p => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => {
+                                        onSelect(p.id);
+                                        setContextMenu(null);
+                                    }}
+                                    className={`text-left p-2 rounded-lg text-xs transition-colors group flex items-start gap-2 ${p.id === selectedId
+                                            ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                                            : "hover:bg-[var(--bg-primary)] text-[var(--text-secondary)]"
+                                        }`}
+                                >
+                                    <div className="mt-0.5 shrink-0">
+                                        {p.mode === "evolved" || p.parentId ? (
+                                            <div className={`${p.relationType === 'enhanced'
+                                                    ? 'text-[var(--accent-green)]'
+                                                    : 'text-[var(--accent-purple)]'
+                                                }`}>
+                                                {p.relationType === 'enhanced' ? <Sparkles size={12} /> : <History size={12} />}
+                                            </div>
+                                        ) : (
+                                            <div className="w-3 h-3 flex items-center justify-center">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)]" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="truncate font-medium">{p.content.substring(0, 40)}...</div>
+                                        <div className="text-[9px] text-[var(--text-muted)] font-mono mt-0.5">{p.timestamp}</div>
+                                    </div>
+                                </button>
+                            ))}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </aside>
     );
 };
 

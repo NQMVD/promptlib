@@ -1,0 +1,8 @@
+[
+  {
+    "id": "ff1cc044-2860-4288-9519-08de2be0487e",
+    "prompt_id": "4e87a583-0e29-4664-9c35-278fe644c8a3",
+    "note": "Create a 'Feedback Loop' UI in the Evolve tab where users can rate the evolved prompt (thumbs up/down) to potentially train a custom fine-tuning dataset.",
+    "created_at": "2025-12-29T20:33:05.329Z"
+  }
+]

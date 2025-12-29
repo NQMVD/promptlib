@@ -1,0 +1,30 @@
+[
+  {
+    "id": "5bd771e0-f02c-4a57-a8df-2a3005a4d2fd",
+    "prompt_id": "2c784504-489d-4241-a1f6-47be12164e32",
+    "questions": [
+      "What specific dark mode design system or components should be used (e.g., Tailwind CSS with Anthropic-like colors, or a specific library like Chakra UI)?",
+      "How should the backend/API integration be handled for OpenRouter (e.g., via a serverless function, proxy, or direct client-side calls with API key management)?",
+      "Can you specify the exact data structure needed for linking prompts, versions, and variants (e.g., should it be a tree structure, linear history, or tagged versions)?",
+      "What authentication or user management is required (e.g., local storage only, or user accounts with database persistence)?",
+      "Are there any specific input/output format requirements for the prompt editor (e.g., Markdown support, syntax highlighting, variables injection)?",
+      "How should the configurable model for enhancement/evolution be selected (e.g., a dropdown of OpenRouter models, or a fixed setting)?",
+      "What should happen to the user's notes after the evolution process completes (e.g., archived, deleted, or kept for the next iteration)?",
+      "In the discussion mode, should the generated questions and ideas be interactive (e.g., clickable to insert into the prompt) or just read-only text?",
+      "For viewing previous versions, do you prefer a timeline view, a side-by-side diff view, or a list with previews?",
+      "Is there a requirement for exporting or sharing these prompts and their history outside the application?"
+    ],
+    "additions": [
+      "Include a 'Version Control' sidebar that visualizes the prompt history as a tree/graph, allowing easy navigation between base, enhanced, evolved, and discussed versions.",
+      "Add a 'Prompt Variables' input section to define placeholders (e.g., {{user_input}}) that can be previewed/tested before sending to the model.",
+      "Implement a 'Diff Viewer' component specifically for the comparison view to highlight changes between the base prompt and its variants (enhanced/evolved).",
+      "Add a 'System Prompt' input field separate from the main prompt, as AI agents often require distinct system instructions.",
+      "Include a 'Settings' modal to configure the OpenRouter API key, default model selection, and temperature/top-p parameters for generation.",
+      "Implement local persistence (IndexedDB or LocalStorage) to save prompts and history automatically, ensuring no data loss on refresh.",
+      "Add a 'Copy to Clipboard' success toast notification for all generated prompts.",
+      "Create a 'Feedback Loop' UI in the Evolve tab where users can rate the evolved prompt (thumbs up/down) to potentially train a custom fine-tuning dataset.",
+      "Add a 'Prompt Library' view where users can browse, search, and filter all saved prompts and their descriptions."
+    ],
+    "created_at": "2025-12-29T20:30:25.706Z"
+  }
+]

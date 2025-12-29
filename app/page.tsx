@@ -41,12 +41,16 @@ export default function Home() {
     loadPrompts()
   }, [])
 
-  // Load notes when prompt changes
+  // Load notes and discussion when prompt changes
   useEffect(() => {
     if (selectedPrompt) {
       loadNotes(selectedPrompt.id)
+      loadDiscussion(selectedPrompt.id)
+    } else {
+      setNotes([])
+      setDiscussion(null)
     }
-  }, [selectedPrompt]) // Updated to use selectedPrompt directly
+  }, [selectedPrompt])
 
   const loadPrompts = async () => {
     try {
@@ -69,6 +73,21 @@ export default function Home() {
       setNotes(data)
     } catch (error) {
       console.error("Failed to load notes:", error)
+    }
+  }
+
+  const loadDiscussion = async (promptId: string) => {
+    try {
+      const response = await fetch(`/api/prompts/${promptId}/discussion`)
+      const data = await response.json()
+      if (data && (data.questions?.length > 0 || data.additions?.length > 0)) {
+        setDiscussion(data)
+      } else {
+        setDiscussion(null)
+      }
+    } catch (error) {
+      console.error("Failed to load discussion:", error)
+      setDiscussion(null)
     }
   }
 
@@ -329,6 +348,16 @@ export default function Home() {
         throw new Error(data.error || "Failed to generate discussion")
       }
 
+      // Save the discussion
+      await fetch(`/api/prompts/${selectedPrompt.id}/discussion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questions: data.questions,
+          additions: data.additions,
+        }),
+      })
+
       setDiscussion({
         questions: data.questions,
         additions: data.additions,
@@ -437,8 +466,11 @@ export default function Home() {
             prompts={prompts}
             selectedPromptId={selectedPrompt?.id || null}
             onSelect={(prompt) => {
-              setSelectedPrompt(prompt)
-              setViewMode("edit")
+              if (selectedPrompt?.id !== prompt.id) {
+                setSelectedPrompt(prompt)
+                setDiscussion(null)
+                setViewMode("edit")
+              }
             }}
             onDuplicate={handleDuplicatePrompt}
             onDelete={handleDeletePrompt}

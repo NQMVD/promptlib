@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import VariantsGallery from "./VariantsGallery";
+import LineageTimeline from "./components/LineageTimeline";
 import {
   Plus,
   Copy,
@@ -363,16 +364,16 @@ const App = () => {
       prev.map((p) =>
         p.id === id
           ? {
-              ...p,
-              models: [
-                ...p.models,
-                {
-                  ...modelData,
-                  id: Date.now() + Math.random(),
-                  timestamp: formatDate(new Date()),
-                },
-              ],
-            }
+            ...p,
+            models: [
+              ...p.models,
+              {
+                ...modelData,
+                id: Date.now() + Math.random(),
+                timestamp: formatDate(new Date()),
+              },
+            ],
+          }
           : p,
       ),
     );
@@ -383,9 +384,9 @@ const App = () => {
       prev.map((p) =>
         p.id === promptId
           ? {
-              ...p,
-              models: p.models.filter((m) => m.id !== modelId),
-            }
+            ...p,
+            models: p.models.filter((m) => m.id !== modelId),
+          }
           : p,
       ),
     );
@@ -397,16 +398,16 @@ const App = () => {
       prev.map((p) =>
         p.id === id
           ? {
-              ...p,
-              thoughts: [
-                ...p.thoughts,
-                {
-                  id: Date.now(),
-                  text,
-                  timestamp: formatDate(new Date()),
-                },
-              ],
-            }
+            ...p,
+            thoughts: [
+              ...p.thoughts,
+              {
+                id: Date.now(),
+                text,
+                timestamp: formatDate(new Date()),
+              },
+            ],
+          }
           : p,
       ),
     );
@@ -750,7 +751,7 @@ const App = () => {
             getLineages(filteredPrompts).map((lineage) => {
               const activeIndex = Math.min(
                 lineageActiveIndices[lineage.rootId] ??
-                  lineage.versions.length - 1,
+                lineage.versions.length - 1,
                 lineage.versions.length - 1,
               );
               const prompt = lineage.versions[activeIndex];
@@ -762,11 +763,10 @@ const App = () => {
                   key={lineage.rootId}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`group relative bg-[#111] border rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden shadow-md hover:shadow-xl ${
-                    editingId === prompt.id
+                  className={`group relative bg-[#111] border rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden shadow-md hover:shadow-xl ${editingId === prompt.id
                       ? "border-[#444] bg-[#1a1a1a]"
                       : "border-[#222] hover:border-[#333]"
-                  }`}
+                    }`}
                   onClick={() => {
                     if (editingId !== prompt.id) setSelectedPromptId(prompt.id);
                   }}
@@ -887,53 +887,18 @@ const App = () => {
                       <div className="flex items-center gap-4">
                         {lineage.versions.length > 1 && (
                           <div
-                            className="flex items-center gap-1 bg-[#0a0a0a] rounded-lg p-1 border border-[#222]"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <button
-                              disabled={activeIndex === 0}
-                              onClick={() =>
+                            <LineageTimeline
+                              versions={lineage.versions}
+                              activeIndex={activeIndex}
+                              onSelect={(idx) =>
                                 setLineageActiveIndices((prev) => ({
                                   ...prev,
-                                  [lineage.rootId]: Math.max(
-                                    0,
-                                    activeIndex - 1,
-                                  ),
+                                  [lineage.rootId]: idx,
                                 }))
                               }
-                              className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
-                            >
-                              <ChevronLeft size={14} />
-                            </button>
-                            <div className="flex gap-1 px-2">
-                              {lineage.versions.map((_, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`w-1 h-1 rounded-full transition-all ${
-                                    idx === activeIndex
-                                      ? "bg-[#AAA0FA] scale-125"
-                                      : "bg-[#333]"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <button
-                              disabled={
-                                activeIndex === lineage.versions.length - 1
-                              }
-                              onClick={() =>
-                                setLineageActiveIndices((prev) => ({
-                                  ...prev,
-                                  [lineage.rootId]: Math.min(
-                                    lineage.versions.length - 1,
-                                    activeIndex + 1,
-                                  ),
-                                }))
-                              }
-                              className="p-1.5 hover:bg-[#222] rounded text-[#444] hover:text-[#888] disabled:opacity-20"
-                            >
-                              <ChevronRight size={14} />
-                            </button>
+                            />
                           </div>
                         )}
                       </div>
@@ -944,8 +909,8 @@ const App = () => {
                         </div>
                         {(prompt.models.length > 0 ||
                           prompt.thoughts.length > 0) && (
-                          <span className="text-[#444] opacity-40">·</span>
-                        )}
+                            <span className="text-[#444] opacity-40">·</span>
+                          )}
                         {prompt.models.length > 0 && (
                           <div className="flex items-center gap-1.5 text-[11px] text-[#777]">
                             <Zap size={11} className="text-[#EEB180]" />
@@ -971,11 +936,10 @@ const App = () => {
                         onClick={() =>
                           copyToClipboard(prompt.content, prompt.id)
                         }
-                        className={`p-2 rounded-lg transition-all ${
-                          copiedId === prompt.id
+                        className={`p-2 rounded-lg transition-all ${copiedId === prompt.id
                             ? "text-[#7FD88F] bg-[#7FD88F]/10"
                             : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
-                        }`}
+                          }`}
                         title="Copy"
                       >
                         {copiedId === prompt.id ? (
@@ -1212,11 +1176,10 @@ const App = () => {
                                 selectedPrompt.id,
                               )
                             }
-                            className={`p-2 rounded-lg transition-all ${
-                              copiedId === selectedPrompt.id
+                            className={`p-2 rounded-lg transition-all ${copiedId === selectedPrompt.id
                                 ? "text-[#7FD88F] bg-[#7FD88F]/10"
                                 : "text-[#888] hover:text-[#f0f0f0] hover:bg-[#262626]"
-                            }`}
+                              }`}
                             title="Copy"
                           >
                             {copiedId === selectedPrompt.id ? (
@@ -1588,14 +1551,14 @@ const App = () => {
                       <span className="text-[#333]">|</span>
                       <span className="text-[#60A5FA]">
                         {sideBySidePrompt.content.length >
-                        basePrompt.content.length
+                          basePrompt.content.length
                           ? "+"
                           : ""}
                         {Math.round(
                           ((sideBySidePrompt.content.length -
                             basePrompt.content.length) /
                             basePrompt.content.length) *
-                            100,
+                          100,
                         )}
                         % change
                       </span>
@@ -1608,11 +1571,10 @@ const App = () => {
                             `base-${basePrompt.id}`,
                           )
                         }
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-                          copiedId === `base-${basePrompt.id}`
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${copiedId === `base-${basePrompt.id}`
                             ? "bg-[#7FD88F]/20 text-[#7FD88F]"
                             : "text-[#555] hover:text-[#888] hover:bg-[#222]"
-                        }`}
+                          }`}
                       >
                         {copiedId === `base-${basePrompt.id}` ? (
                           <Check size={12} />
@@ -1628,13 +1590,12 @@ const App = () => {
                             sideBySidePrompt.id,
                           )
                         }
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-                          copiedId === sideBySidePrompt.id
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${copiedId === sideBySidePrompt.id
                             ? "bg-[#7FD88F]/20 text-[#7FD88F]"
                             : sideBySidePrompt.relationType === "enhanced"
                               ? "text-[#7FD88F] hover:bg-[#7FD88F]/10"
                               : "text-[#AAA0FA] hover:bg-[#AAA0FA]/10"
-                        }`}
+                          }`}
                       >
                         {copiedId === sideBySidePrompt.id ? (
                           <Check size={12} />

@@ -157,7 +157,7 @@ const App = () => {
     }
   };
 
-  const evolvePrompt = async (thought) => {
+  const evolvePrompt = async (thoughts) => {
     const prompt = prompts.find(p => p.id === selectedPromptId);
     if (!prompt) return;
 
@@ -167,7 +167,12 @@ const App = () => {
     }
 
     setIsProcessing(true);
-    const systemPrompt = "Role: Prompt Evolution Specialist. Task: Evolve the base prompt by integrating user feedback and thoughts. Output ONLY the evolved prompt text.";
+    // Join thoughts into a single string for the prompt
+    const thoughtsText = Array.isArray(thoughts)
+      ? thoughts.map((t, i) => `${i + 1}. ${t.text}`).join("\n")
+      : thoughts;
+
+    const systemPrompt = "Role: Prompt Evolution Specialist. Task: Evolve the base prompt by integrating the user's notes and thoughts. Output ONLY the evolved prompt text.";
 
     try {
       const response = await fetch(PROVIDERS[provider].endpoint, {
@@ -181,7 +186,7 @@ const App = () => {
           model: modelId,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `Base: ${prompt.content}\nThoughts: ${thought}` }
+            { role: "user", content: `Base: ${prompt.content}\n\nEvolution Notes:\n${thoughtsText}` }
           ]
         })
       });

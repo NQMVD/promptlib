@@ -1,6 +1,8 @@
 TODOS
 	IDEAS
 		add "add to evolve notes" button to each additions entry
+		add markdown rendering for the prompt
+		add actual diff viewer for comparing prompts
 		add a answer textbox to the questions entries which the user can fill out to then add question and answer to the evolve notes too
 		add branch like lines to the prompt entries with children to connect them, just like the tree command
 		add a multi-modell mode for enhancing which lets the user choose which answer is best
@@ -18,17 +20,20 @@ TODOS
 		long prompts cant be scrolled when in compare view, same for other lists like the ones in the discussion view
 	IMPROVEMENTS
 		keyboard shortcuts for everything
+		copy button for the prompt
+		prompt deletion needs confirm action somehow
+		message toasts are way to big, they should be compact
 		saving with cmd+enter
 		visual improvements
-			fix colors all being terracotta...
+			✓ fix colors all being terracotta...
 			fix orange focus border being to extreme
-			textboxes should blend in with the background maybe
+			textboxes should blend in with the background maybe, until hovered or clicked
 	CHANGES
 		default model should not be a sonnet model lol, go with GPT OSS again
 		more providers again
 			groq
 			inception
 			z.ai
-		proper system prompts, take the ones from old version
+		✓ proper system prompts, take the ones from old version
 		invert order of additions for both evolution notes and child variants in the sidebar
 

@@ -52,5 +52,23 @@
     "id": "7c83e53f-3b33-450f-a21b-843a03f770b2",
     "created_at": "2025-12-29T22:37:24.955Z",
     "updated_at": "2025-12-29T22:37:24.955Z"
+  },
+  {
+    "title": "Prompt Studio with Image",
+    "content": "built me a prompt studio. it should allow me to work on prompts for AI agents. i need to be able to create prompts and edit them when i want to, also duplicate or delete them. also there should be a enhance button that sends the prompt to a configurable model via openrouter to be optimized. also there should be a evolve feature that allows me to collect a list of notes for a prompt, which on click of the evolve button will be send together with the prompt again to a model which then evolvs a new prompt according to the feedback in the notes. it would also be cool to have a discussion mode, where the prompt will be send to a model with the task to generate questions to ask the user and also additional ideas that the prompts could benefit from, both lists of questions and additions should be placed in the same view next to each other so that the user can interact with them. i imagine the layout to allow me to compare the variants (enhanced and evolved) of a prompt with its base, in general i want to be able to view previous versions of all prompts in a clear and structured way. for all of this you probably need to figure out a smart way of connecting prompts and their variants together. make it look and feel like this ui (attached image) as best as possible, this is very important.",
+    "parent_id": null,
+    "variant_type": "base",
+    "id": "cee190bf-fbe5-45ce-a2c5-527ea1fa8320",
+    "created_at": "2025-12-30T15:27:23.518Z",
+    "updated_at": "2025-12-30T15:27:40.462Z"
+  },
+  {
+    "title": "Prompt Studio with Image (Enhanced)",
+    "content": "Prompt Studio for AI Agent Prompt Engineering\n\n**Core Functionality:**\n- **Prompt Management:** Create, edit, duplicate, and delete prompts.\n- **Enhance Feature:** Optimize prompts via OpenRouter API using a configurable model.\n- **Evolve Feature:** Collect user notes and send them with the prompt to a model to generate a new prompt variant based on feedback.\n- **Discussion Mode:** Generate a list of questions and additional ideas for the prompt, displayed side-by-side in the same view for user interaction.\n\n**Version Control & Comparison:**\n- Maintain a clear, structured view of all prompt versions (base, enhanced, evolved).\n- Enable side-by-side comparison of variants (e) vs. base.\n\n**UI Design & Layout:**\n- Match the visual style and layout of the attached screenshot exactly.\n- Ensure intuitive navigation and interaction for all features.",
+    "parent_id": "cee190bf-fbe5-45ce-a2c5-527ea1fa8320",
+    "variant_type": "enhanced",
+    "id": "73f2adaf-0771-4512-8222-5213369fdd6a",
+    "created_at": "2025-12-30T15:27:54.993Z",
+    "updated_at": "2025-12-30T15:27:54.993Z"
   }
 ]
